@@ -44,6 +44,9 @@ export default function LoginPage() {
             {enviando ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
+        <p className="muted" style={{ marginTop: 14, fontSize: 13 }}>
+          Conta nova sem senha? <a href="/primeiro-acesso">Primeiro acesso</a>
+        </p>
       </div>
     </div>
   );
