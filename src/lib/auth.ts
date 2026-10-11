@@ -2,6 +2,7 @@ import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { run } from '@/lib/db';
 import { gastarTempo, verificarSenha } from '@/lib/password';
+import { segredoSessao } from '@/lib/segredo';
 
 const MAX_TENTATIVAS = 5;
 const BLOQUEIO_MINUTOS = 15;
@@ -35,6 +36,7 @@ async function registrar(
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: segredoSessao(),
   session: { strategy: 'jwt', maxAge: 8 * 60 * 60 },
   pages: { signIn: '/login' },
   providers: [

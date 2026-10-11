@@ -6,7 +6,7 @@ const g = globalThis as unknown as { __govSql?: Sql };
 
 function criar(): Sql {
   // DATABASE_URL (manual) ou POSTGRES_URL (criada pela integração Supabase–Vercel, pooler 6543).
-  const bruto = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  const bruto = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL;
   if (!bruto) throw new Error('DATABASE_URL não configurada');
   // A integração acrescenta parâmetros (ex.: ?supa=...) que o Postgres rejeita; usamos só a base da URL.
   const u = new URL(bruto);
