@@ -5,9 +5,13 @@ export type Sql = postgres.Sql;
 const g = globalThis as unknown as { __govSql?: Sql };
 
 function criar(): Sql {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error('DATABASE_URL não configurada');
-  return postgres(url, {
+  // DATABASE_URL (manual) ou POSTGRES_URL (criada pela integração Supabase–Vercel, pooler 6543).
+  const bruto = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (!bruto) throw new Error('DATABASE_URL não configurada');
+  // A integração acrescenta parâmetros (ex.: ?supa=...) que o Postgres rejeita; usamos só a base da URL.
+  const u = new URL(bruto);
+  u.search = '';
+  return postgres(u.toString(), {
     ssl: 'require',
     prepare: false, // obrigatório no pooler em modo transação
     max: 5,
