@@ -8,7 +8,7 @@ const g = globalThis as unknown as { __govSql?: Sql };
 function lerConexao(bruto: string) {
   const t = bruto.trim().replace(/^['"]|['"]$/g, '');
   // usuário:senha@host:porta/banco  — a senha vai até o ÚLTIMO "@"
-  const m = t.match(/^postgres(?:ql)?:\/\/([^:/?#@]+):(.*)@([^@/?#]+)(?::(\d+))?(?:\/([^?#]*))?/s);
+  const m = t.match(/^postgres(?:ql)?:\/\/([^:/?#@]+):(.*)@([^@/?#:]+)(?::(\d+))?(?:\/([^?#]*))?/s);
   if (!m) throw new Error('DATABASE_URL em formato inválido (esperado postgresql://usuario:senha@host:6543/postgres)');
   let senha = m[2];
   try {
