@@ -4,14 +4,33 @@ export type Sql = postgres.Sql;
 
 const g = globalThis as unknown as { __govSql?: Sql };
 
+/** Lê a URL do Postgres de forma tolerante: aceita símbolos na senha e ignora parâmetros extras. */
+function lerConexao(bruto: string) {
+  const t = bruto.trim().replace(/^['"]|['"]$/g, '');
+  // usuário:senha@host:porta/banco  — a senha vai até o ÚLTIMO "@"
+  const m = t.match(/^postgres(?:ql)?:\/\/([^:/?#@]+):(.*)@([^@/?#]+)(?::(\d+))?(?:\/([^?#]*))?/s);
+  if (!m) throw new Error('DATABASE_URL em formato inválido (esperado postgresql://usuario:senha@host:6543/postgres)');
+  let senha = m[2];
+  try {
+    senha = decodeURIComponent(senha); // se já veio codificada com %XX
+  } catch {
+    /* mantém como está */
+  }
+  return {
+    user: decodeURIComponent(m[1]),
+    pass: senha,
+    host: m[3],
+    port: Number(m[4] || 5432),
+    database: m[5] || 'postgres',
+  };
+}
+
 function criar(): Sql {
   // DATABASE_URL (manual) ou POSTGRES_URL (criada pela integração Supabase–Vercel, pooler 6543).
   const bruto = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL;
   if (!bruto) throw new Error('DATABASE_URL não configurada');
-  // A integração acrescenta parâmetros (ex.: ?supa=...) que o Postgres rejeita; usamos só a base da URL.
-  const u = new URL(bruto);
-  u.search = '';
-  return postgres(u.toString(), {
+  return postgres({
+    ...lerConexao(bruto),
     ssl: 'require',
     prepare: false, // obrigatório no pooler em modo transação
     max: 5,

@@ -20,6 +20,7 @@ type Linha = {
 function diagnosticoBanco(e: unknown): string {
   const c = String((e as { code?: string })?.code ?? '');
   const m = String((e as { message?: string })?.message ?? '');
+  if (/formato inválido/.test(m)) return 'banco: DATABASE_URL em formato inválido (confira o texto colado na Vercel)';
   if (/DATABASE_URL|POSTGRES_URL/.test(m)) return 'banco: nenhuma variável de conexão (POSTGRES_URL/DATABASE_URL) configurada';
   if (c === '28P01' || /password authentication/i.test(m)) return 'banco: senha do banco incorreta';
   if (/tenant or user not found/i.test(m)) return 'banco: projeto ou usuário do pooler não encontrado';
