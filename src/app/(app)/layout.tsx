@@ -13,6 +13,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (can(u.papel, 'mandatos:ler')) itens.push({ href: '/mandatos', label: 'Mandatos' });
   if (can(u.papel, 'assembleias:ler')) itens.push({ href: '/assembleias', label: 'Assembleias' });
   if (can(u.papel, 'disciplinar:ler')) itens.push({ href: '/disciplinar', label: 'Disciplinar' });
+  if (can(u.papel, 'financeiro:ler')) itens.push({ href: '/financeiro', label: 'Financeiro' });
+  if (can(u.papel, 'convenios:ler')) itens.push({ href: '/convenios', label: 'Convênios e doações' });
+  if (can(u.papel, 'financeiro:ler')) itens.push({ href: '/prestacoes', label: 'Prestação de contas' });
+  if (can(u.papel, 'patrimonio:ler')) itens.push({ href: '/patrimonio', label: 'Patrimônio' });
   if (can(u.papel, 'calendario:ler')) itens.push({ href: '/calendario', label: 'Calendário de obrigações' });
   if (can(u.papel, 'usuarios:gerir')) itens.push({ href: '/usuarios', label: 'Usuários' });
   if (can(u.papel, 'auditoria:ler')) itens.push({ href: '/auditoria', label: 'Auditoria' });

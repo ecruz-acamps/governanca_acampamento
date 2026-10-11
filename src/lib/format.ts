@@ -141,3 +141,49 @@ export const STATUS_PROC: Record<string, { rotulo: string; tom: string }> = {
   encerrada: { rotulo: 'Encerrado', tom: 'mute' },
 };
 
+
+export const ORIGEM_LABEL: Record<string, string> = {
+  propria: 'Recurso próprio',
+  doacao: 'Doação',
+  verba_publica: 'Verba pública',
+  convenio: 'Convênio',
+};
+
+export const CONVENIO_TIPO_LABEL: Record<string, string> = {
+  doacao: 'Doação',
+  subvencao: 'Subvenção',
+  convenio: 'Convênio',
+  auxilio: 'Auxílio',
+};
+
+export const CONVENIO_STATUS: Record<string, { rotulo: string; tom: string }> = {
+  em_analise: { rotulo: 'Em análise', tom: 'warn' },
+  aceito: { rotulo: 'Aceito', tom: 'ok' },
+  recusado: { rotulo: 'Recusado', tom: 'bad' },
+};
+
+export const PRESTACAO_TIPO_LABEL: Record<string, string> = {
+  mensal: 'Prestação mensal',
+  trimestral_verba_publica: 'Verba pública (trimestral)',
+  balancete_anual: 'Balancete anual',
+};
+
+export const PRESTACAO_STATUS: Record<string, { rotulo: string; tom: string }> = {
+  rascunho: { rotulo: 'Rascunho', tom: 'mute' },
+  emitido: { rotulo: 'Emitido', tom: 'warn' },
+  com_parecer_cf: { rotulo: 'Com parecer do CF', tom: 'ok' },
+  aprovado_em_assembleia: { rotulo: 'Aprovado em assembleia', tom: 'ok' },
+};
+
+export function fmtMoeda(v: number | string | null | undefined): string {
+  if (v == null || v === '') return '—';
+  return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+/** "1.234,56" ou "1234.56" → número (ou null). */
+export function lerValor(txt: string | null): number | null {
+  if (!txt) return null;
+  const limpo = txt.replace(/[R$\s]/g, '');
+  const n = limpo.includes(',') ? Number(limpo.replace(/\./g, '').replace(',', '.')) : Number(limpo);
+  return Number.isFinite(n) ? n : null;
+}

@@ -11,6 +11,10 @@ const POR_RESTRICAO: Record<string, string> = {
   ck_antecedencia_30d: 'A assembleia precisa ser realizada com pelo menos 30 dias depois da convocação (Art. 13, II).',
   ck_recurso_no_prazo: 'O recurso só vale se for apresentado em até 5 dias da ciência pessoal (Art. 8 §2).',
   ck_aplicacao_exige_consenso: 'Para aplicar a medida é preciso registrar antes o consenso da coordenação geral, do conselho e do orientador espiritual (Art. 8 §1).',
+  ck_aceite_com_tres_aprovacoes: 'Para aceitar é preciso ter as três aprovações: Conselho, orientação espiritual e coordenação geral (Art. 5).',
+  ck_despesa_autorizada: 'Toda despesa precisa de autorização da coordenação geral (Art. 20, b). Informe quem autorizou.',
+  ck_baixa_autorizada: 'A baixa de bem exige deliberação aprovada em assembleia e parecer do Conselho Fiscal (Art. 5 par. único, 12 I e 22 d).',
+  patrimonio_numero_tombo_key: 'Já existe um bem com esse número de tombo.',
   ck_email_minusculo: 'O e-mail precisa estar em letras minúsculas.',
 };
 
