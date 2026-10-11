@@ -21,7 +21,11 @@ export default function LoginPage() {
     if (r?.ok && !r.error) {
       window.location.href = '/';
     } else {
-      setErro('E-mail ou senha incorretos, ou conta temporariamente bloqueada.');
+      setErro(
+        r?.error && r.error !== 'CredentialsSignin'
+          ? 'Erro do servidor — ' + r.error
+          : 'E-mail ou senha incorretos, ou conta temporariamente bloqueada.',
+      );
     }
   }
 

@@ -17,6 +17,17 @@ type Linha = {
   bloqueado: boolean;
 };
 
+function diagnosticoBanco(e: unknown): string {
+  const c = String((e as { code?: string })?.code ?? '');
+  const m = String((e as { message?: string })?.message ?? '');
+  if (/DATABASE_URL|POSTGRES_URL/.test(m)) return 'banco: nenhuma variável de conexão (POSTGRES_URL/DATABASE_URL) configurada';
+  if (c === '28P01' || /password authentication/i.test(m)) return 'banco: senha do banco incorreta';
+  if (/tenant or user not found/i.test(m)) return 'banco: projeto ou usuário do pooler não encontrado';
+  if (c === '42P01' || c === '3F000') return 'banco: tabelas gov não existem neste banco (projeto errado?)';
+  if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|CONNECT_TIMEOUT/.test(c + m)) return 'banco: sem conexão com o servidor';
+  return 'banco: erro ' + (c || 'desconhecido');
+}
+
 async function registrar(
   usuarioId: string | null,
   email: string,
@@ -51,11 +62,17 @@ export const authOptions: NextAuthOptions = {
         const agente = String(cab['user-agent'] ?? '');
         if (!email || !senha || senha.length > 200) return null;
 
-        const [u] = await run(null, (tx) => tx<Linha[]>`
-          select id, email, nome, senha_hash, ativo, tentativas_falhas,
-                 (bloqueado_ate is not null and bloqueado_ate > now()) as bloqueado
-            from gov.usuario where email = ${email}
-        `);
+        let u: Linha | undefined;
+        try {
+          [u] = await run(null, (tx) => tx<Linha[]>`
+            select id, email, nome, senha_hash, ativo, tentativas_falhas,
+                   (bloqueado_ate is not null and bloqueado_ate > now()) as bloqueado
+              from gov.usuario where email = ${email}
+          `);
+        } catch (e) {
+          console.error('LOGIN_ERRO_BANCO', e);
+          throw new Error(diagnosticoBanco(e));
+        }
 
         if (!u || !u.ativo || !u.senha_hash) {
           await gastarTempo(senha);
