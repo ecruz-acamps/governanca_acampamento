@@ -21,3 +21,6 @@ Next.js 14 + Supabase (Postgres, esquema `gov`). Login próprio (senha só como 
 - Só o servidor acessa o banco; `anon`/`authenticated` não têm acesso.
 - Bloqueio de 15 min após 5 erros de senha; histórico em Auditoria > Últimos acessos.
 - Papéis em `src/lib/perms.ts`.
+
+## Acesso direto do sistema interno (SSO)
+Veja `docs/sso.md`. Requer a variável `SSO_SECRET` (mín. 32 caracteres) na Vercel e no sistema interno.

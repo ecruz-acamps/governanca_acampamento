@@ -25,13 +25,14 @@ type Linha = {
 /** Lê o usuário a cada requisição: desativar uma conta vale na hora. */
 export const getUsuario = cache(async (): Promise<Usuario | null> => {
   const sessao = await getServerSession(authOptions);
-  const uid = (sessao as unknown as { uid?: string } | null)?.uid;
+  const info = sessao as unknown as { uid?: string; sso?: boolean } | null;
+  const uid = info?.uid;
   if (!uid) return null;
   const [u] = await run(null, (tx) => tx<Linha[]>`
     select id, email, nome, papel, ativo, precisa_trocar_senha from gov.usuario where id = ${uid}
   `);
   if (!u || !u.ativo) return null;
-  return { id: u.id, email: u.email, nome: u.nome, papel: u.papel, precisaTrocar: u.precisa_trocar_senha };
+  return { id: u.id, email: u.email, nome: u.nome, papel: u.papel, precisaTrocar: u.precisa_trocar_senha && !info?.sso };
 });
 
 export async function requireUser(opcoes?: { permitirTroca?: boolean }): Promise<Usuario> {

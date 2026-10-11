@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { run } from '@/lib/db';
 import { gastarTempo, verificarSenha } from '@/lib/password';
 import { segredoSessao } from '@/lib/segredo';
+import { verificarTokenSso } from '@/lib/sso';
 
 const MAX_TENTATIVAS = 5;
 const BLOQUEIO_MINUTOS = 15;
@@ -52,6 +53,44 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt', maxAge: 8 * 60 * 60 },
   pages: { signIn: '/login' },
   providers: [
+    CredentialsProvider({
+      id: 'sso',
+      name: 'Acesso pelo sistema interno',
+      credentials: { token: {} },
+      async authorize(credenciais, req) {
+        const cab = (req?.headers ?? {}) as Record<string, string | string[] | undefined>;
+        const ip = String(cab['x-forwarded-for'] ?? '').split(',')[0].trim() || 'desconhecido';
+        const agente = String(cab['user-agent'] ?? '');
+        const token = String(credenciais?.token ?? '').slice(0, 2000);
+        let email = '';
+        try {
+          const p = verificarTokenSso(token);
+          email = p.email;
+          const r = await run(null, async (tx) => {
+            const [u] = await tx<{ id: string; nome: string }[]>`
+              select id, nome from gov.usuario where email = ${p.email} and ativo and papel = 'admin'
+            `;
+            if (!u) return { erro: 'usuario_nao_admin' as const };
+            // uso único: o mesmo link não vale duas vezes
+            const usado = await tx`
+              insert into gov.sso_uso (jti, email) values (${p.jti}, ${p.email})
+              on conflict (jti) do nothing returning jti
+            `;
+            if (usado.length === 0) return { erro: 'reutilizado' as const };
+            await tx`update gov.usuario set ultimo_acesso = now() where id = ${u.id}`;
+            return { u };
+          });
+          if ('erro' in r) throw new Error(r.erro);
+          await registrar(r.u.id, email, true, 'sso_ok', ip, agente);
+          return { id: r.u.id, email, name: r.u.nome, sso: true } as never;
+        } catch (e) {
+          const motivo = e instanceof Error ? e.message : 'erro';
+          console.error('SSO_FALHA', motivo);
+          await registrar(null, email || 'sso', false, 'sso_falha:' + motivo, ip, agente);
+          return null;
+        }
+      },
+    }),
     CredentialsProvider({
       name: 'E-mail e senha',
       credentials: { email: {}, senha: {} },
@@ -111,11 +150,16 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.uid = user.id;
+      if (user) {
+        token.uid = user.id;
+        token.sso = (user as unknown as { sso?: boolean }).sso === true;
+      }
       return token;
     },
     async session({ session, token }) {
-      (session as unknown as { uid?: string }).uid = token.uid as string | undefined;
+      const x = session as unknown as { uid?: string; sso?: boolean };
+      x.uid = token.uid as string | undefined;
+      x.sso = token.sso === true;
       return session;
     },
   },
