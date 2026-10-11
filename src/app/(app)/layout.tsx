@@ -1,0 +1,35 @@
+import LogoutButton from '@/components/LogoutButton';
+import NavLinks, { type Item } from '@/components/NavLinks';
+import { can, PAPEL_LABEL } from '@/lib/perms';
+import { requireUser } from '@/lib/session';
+
+export const dynamic = 'force-dynamic';
+
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const u = await requireUser();
+  const itens: Item[] = [{ href: '/', label: 'Painel' }];
+  if (can(u.papel, 'associados:ler')) itens.push({ href: '/associados', label: 'Associados' });
+  if (can(u.papel, 'reunioes:ler')) itens.push({ href: '/reunioes', label: 'Reuniões e presença' });
+  if (can(u.papel, 'mandatos:ler')) itens.push({ href: '/mandatos', label: 'Mandatos' });
+  if (can(u.papel, 'calendario:ler')) itens.push({ href: '/calendario', label: 'Calendário de obrigações' });
+  if (can(u.papel, 'usuarios:gerir')) itens.push({ href: '/usuarios', label: 'Usuários' });
+  if (can(u.papel, 'auditoria:ler')) itens.push({ href: '/auditoria', label: 'Auditoria' });
+
+  return (
+    <div className="shell">
+      <aside className="side">
+        <div className="marca">
+          Governança
+          <small>Assoc. dos Campistas São Padre Pio</small>
+        </div>
+        <NavLinks itens={itens} />
+        <div className="rodape">
+          <b>{u.nome}</b>
+          <span>{PAPEL_LABEL[u.papel]}</span>
+          <LogoutButton />
+        </div>
+      </aside>
+      <main className="main">{children}</main>
+    </div>
+  );
+}

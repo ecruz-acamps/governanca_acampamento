@@ -1,0 +1,2 @@
+-- Migration 003: gerar_obrigacoes ignora prazos que já passaram.
+-- (Já aplicada no projeto governanca-spp. A definição atual da função está em 001_governanca.sql.)
