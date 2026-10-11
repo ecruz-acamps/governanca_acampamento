@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { tentar, voltar } from '@/lib/acao';
 import { run } from '@/lib/db';
-import { dataOuNulo, flag, inteiroOuNulo, isUuid, nz } from '@/lib/form';
+import { dataOuNulo, flag, inteiroOuNulo, isUuid, nz, uuidOuNulo } from '@/lib/form';
 import { ACAMPAMENTO_LABEL, hoje } from '@/lib/format';
 import { requirePerm } from '@/lib/session';
 
@@ -30,7 +30,9 @@ export async function salvarAssociado(formData: FormData) {
     data_pedido: dataOuNulo(formData.get('data_pedido')),
     data_promessa: dataOuNulo(formData.get('data_promessa')),
     observacoes: nz(formData.get('observacoes')),
+    proposto_por: uuidOuNulo(formData.get('proposto_por')),
   };
+  if (id && campos.proposto_por === id) voltar(base, '', 'O associado não pode propor a si mesmo.');
 
   let novoId = id;
   const erro = await tentar(async () => {
@@ -43,18 +45,18 @@ export async function salvarAssociado(formData: FormData) {
             acampamento_ano = ${campos.acampamento_ano}, primeira_eucaristia = ${campos.primeira_eucaristia},
             participou_missao_senior = ${campos.participou_missao_senior}, motivo_pedido = ${campos.motivo_pedido},
             data_pedido = ${campos.data_pedido}, data_promessa = ${campos.data_promessa},
-            observacoes = ${campos.observacoes}
+            observacoes = ${campos.observacoes}, proposto_por = ${campos.proposto_por}
           where id = ${id}
         `;
       } else {
         const [r] = await tx<{ id: string }[]>`
           insert into gov.associado
             (nome, email, telefone, data_nascimento, acampamento_tipo, acampamento_ano, primeira_eucaristia,
-             participou_missao_senior, motivo_pedido, data_pedido, data_promessa, observacoes)
+             participou_missao_senior, motivo_pedido, data_pedido, data_promessa, observacoes, proposto_por)
           values
             (${campos.nome}, ${campos.email}, ${campos.telefone}, ${campos.data_nascimento}, ${campos.acampamento_tipo},
              ${campos.acampamento_ano}, ${campos.primeira_eucaristia}, ${campos.participou_missao_senior},
-             ${campos.motivo_pedido}, ${campos.data_pedido}, ${campos.data_promessa}, ${campos.observacoes})
+             ${campos.motivo_pedido}, ${campos.data_pedido}, ${campos.data_promessa}, ${campos.observacoes}, ${campos.proposto_por})
           returning id
         `;
         novoId = r.id;

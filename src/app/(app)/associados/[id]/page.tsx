@@ -16,7 +16,7 @@ type Assoc = {
   primeira_eucaristia: boolean; participou_missao_senior: boolean; motivo_pedido: string | null;
   data_pedido: string | null; data_admissao: string | null; data_promessa: string | null;
   data_saida: string | null; motivo_saida: string | null; observacoes: string | null;
-  proposto_por_nome: string | null;
+  proposto_por_nome: string | null; proposto_por: string | null; aprovado: boolean;
 };
 
 export default async function AssociadoPage({
@@ -31,6 +31,7 @@ export default async function AssociadoPage({
   let a: Assoc | null = null;
   let freq: { ano: number; presencas: number; reunioes_no_periodo: number; percentual: string; abaixo_do_minimo: boolean }[] = [];
   let mandatos: { cargo: string; inicio: string; fim: string; situacao: string }[] = [];
+  let outros: { id: string; nome: string }[] = [];
 
   if (!novo) {
     const r = await run(u.id, async (tx) => {
@@ -38,7 +39,7 @@ export default async function AssociadoPage({
         select a.id, a.nome, a.email, a.telefone, a.data_nascimento, a.status::text, a.acampamento_tipo::text,
                a.acampamento_ano, a.primeira_eucaristia, a.participou_missao_senior, a.motivo_pedido,
                a.data_pedido, a.data_admissao, a.data_promessa, a.data_saida, a.motivo_saida, a.observacoes,
-               p.nome as proposto_por_nome
+               p.nome as proposto_por_nome, a.proposto_por, (a.admissao_deliberacao_id is not null) as aprovado
           from gov.associado a left join gov.associado p on p.id = a.proposto_por
          where a.id = ${params.id}
       `;
@@ -56,6 +57,9 @@ export default async function AssociadoPage({
     if (!r) notFound();
     a = r.x; freq = r.f; mandatos = r.m;
   }
+  outros = await run(u.id, (tx) => tx<typeof outros>`
+    select id, nome from gov.associado where status = 'associado' and id <> ${novo ? '00000000-0000-0000-0000-000000000000' : params.id} order by nome
+  `);
 
   const emAndamento = a && ['interessado', 'em_acompanhamento'].includes(a.status);
   const ativo = a && ['interessado', 'em_acompanhamento', 'associado', 'suspenso'].includes(a.status);
@@ -89,6 +93,12 @@ export default async function AssociadoPage({
               <label className="check"><input type="checkbox" name="primeira_eucaristia" defaultChecked={a?.primeira_eucaristia} /> Fez a 1ª Eucaristia</label>
               <label className="check"><input type="checkbox" name="participou_missao_senior" defaultChecked={a?.participou_missao_senior} /> Participou da missão do Sênior (exigido para a Diretoria, Art. 16 §1)</label>
             </div>
+            <Campo label="Proposto por (associado)" dica="Só preencha se outro associado indicou esta pessoa (Art. 7, n): exige aprovação em assembleia" className="larga">
+              <select name="proposto_por" defaultValue={a?.proposto_por ?? ''}>
+                <option value="">— pedido da própria pessoa —</option>
+                {outros.map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
+              </select>
+            </Campo>
             <Campo label="Motivo do pedido" className="larga"><textarea name="motivo_pedido" defaultValue={a?.motivo_pedido ?? ''} /></Campo>
             <Campo label="Observações" className="larga"><textarea name="observacoes" defaultValue={a?.observacoes ?? ''} /></Campo>
           </div>
@@ -103,7 +113,7 @@ export default async function AssociadoPage({
             {a.status === 'interessado' && 'Para ser admitido é preciso: acampamento querigmático, 1ª Eucaristia e data de admissão (Art. 6).'}
             {a.status === 'em_acompanhamento' && 'Em acompanhamento. Quando cumprir os requisitos, registre a admissão.'}
             {a.status === 'associado' && `Associado desde ${fmtData(a.data_admissao)}.`}
-            {a.proposto_por_nome && ` Proposto por ${a.proposto_por_nome}.`}
+            {a.proposto_por_nome && ` Proposto por ${a.proposto_por_nome}${a.aprovado ? ' — aprovado em assembleia.' : ' — aguardando aprovação em assembleia.'}`}
           </p>
           <div className="acoes">
             {a.status === 'interessado' && (

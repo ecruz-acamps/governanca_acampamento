@@ -54,6 +54,10 @@ const PERMS = {
   'mandatos:escrever': ['admin', 'presidente', 'secretario'],
   'calendario:ler': EQUIPE,
   'calendario:escrever': ['admin', 'presidente', 'vice_presidente', 'secretario', 'tesoureiro'],
+  'assembleias:ler': EQUIPE,
+  'assembleias:escrever': ['admin', 'presidente', 'vice_presidente', 'secretario'],
+  'disciplinar:ler': ['admin', 'presidente', 'vice_presidente', 'secretario', 'coord_eclesiastico'],
+  'disciplinar:escrever': ['admin', 'presidente', 'vice_presidente', 'coord_eclesiastico'],
   'usuarios:gerir': ['admin'],
   'auditoria:ler': ['admin'],
 } as const satisfies Record<string, readonly Papel[]>;

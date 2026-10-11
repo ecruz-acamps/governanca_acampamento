@@ -86,3 +86,58 @@ export function hoje(): string {
 export function anoAtual(): number {
   return Number(hoje().slice(0, 4));
 }
+
+export const MATERIA_LABEL: Record<string, string> = {
+  contas_anuais: 'Contas anuais',
+  eleicao_posse: 'Eleição e posse',
+  proposta_atividades: 'Proposta de atividades',
+  alienacao_bem: 'Alienação de bem',
+  recurso_disciplinar: 'Recurso disciplinar',
+  alteracao_estatuto: 'Alteração do estatuto',
+  destituicao_administrador: 'Destituição de administrador',
+  admissao_associado: 'Admissão de associado',
+  exclusao_associado: 'Exclusão de associado',
+  aceite_doacao_convenio: 'Aceite de doação/convênio',
+  outra: 'Outra matéria',
+};
+
+export const MEDIDA_LABEL: Record<string, string> = {
+  advertencia: 'Advertência',
+  suspensao: 'Suspensão',
+  exclusao: 'Exclusão',
+};
+
+export const MOTIVO_LABEL: Record<string, string> = {
+  dano_moral_material: 'Dano moral ou material (Art. 8 §1 a)',
+  faltas_reunioes: 'Faltas às reuniões (Art. 8 §1 b)',
+  uso_indevido_associacao: 'Uso indevido da associação (Art. 8 §1 c)',
+  ato_incompativel_objetivos: 'Ato incompatível com os objetivos (Art. 8 §1 d)',
+  descumprimento_estatuto: 'Descumprimento do estatuto (Art. 7 §1)',
+  discordia_ou_quebra_de_sigilo: 'Discórdia ou quebra de sigilo (Art. 24 d)',
+  outro: 'Outro',
+};
+
+export const CONVOCADA_POR_LABEL: Record<string, string> = {
+  presidente: 'Presidente',
+  diretoria: 'Diretoria',
+  conselho_geral: 'Conselho Geral',
+  um_quinto_associados: '1/5 dos associados',
+};
+
+export const CANAIS = ['Reuniões mensais', 'Convites', 'Missas'] as const;
+
+export const ASSEMBLEIA_STATUS: Record<string, { rotulo: string; tom: string }> = {
+  convocada: { rotulo: 'Convocada', tom: 'warn' },
+  instalada: { rotulo: 'Instalada', tom: 'ok' },
+  realizada: { rotulo: 'Realizada', tom: 'ok' },
+  sem_quorum: { rotulo: 'Sem quórum', tom: 'bad' },
+  cancelada: { rotulo: 'Cancelada', tom: 'mute' },
+};
+
+export const STATUS_PROC: Record<string, { rotulo: string; tom: string }> = {
+  aberto: { rotulo: 'Em apuração', tom: 'warn' },
+  aplicada: { rotulo: 'Medida aplicada', tom: 'bad' },
+  em_recurso: { rotulo: 'Em recurso', tom: 'warn' },
+  encerrada: { rotulo: 'Encerrado', tom: 'mute' },
+};
+
