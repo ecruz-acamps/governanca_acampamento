@@ -24,3 +24,8 @@ Next.js 14 + Supabase (Postgres, esquema `gov`). Login próprio (senha só como 
 
 ## Acesso direto do sistema interno (SSO)
 Veja `docs/sso.md`. Requer a variável `SSO_SECRET` (mín. 32 caracteres) na Vercel e no sistema interno.
+
+## Melhorias previstas para a v1.1
+
+- Avisos automáticos (e-mail e WhatsApp) de convocações, prazos e alertas.
+- Envio real de comprovantes e documentos para o Supabase Storage (hoje o comprovante é só uma referência em texto, `fisico:...`).
