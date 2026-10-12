@@ -122,7 +122,7 @@ export async function votar(formData: FormData) {
     await run(u.id, async (tx) => {
       const [a] = await tx<{ associado_id: string | null }[]>`select associado_id from gov.usuario where id = ${u.id}`;
       if (!a?.associado_id) throw regra('Sua conta não está ligada a um associado, por isso não pode votar.');
-      await tx`select gov.registrar_voto(${id}::uuid, ${a.associado_id}::uuid, ${JSON.stringify(votos)}::jsonb)`;
+      await tx`select gov.registrar_voto(${id}::uuid, ${a.associado_id}::uuid, ${JSON.stringify(votos)}::text::jsonb)`;
     });
   });
   voltar(volta, 'Voto registrado. Obrigado!', erro);
