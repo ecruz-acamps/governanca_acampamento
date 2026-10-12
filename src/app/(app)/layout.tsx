@@ -35,7 +35,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           Governança
           <small>Assoc. dos Campistas São Padre Pio</small>
         </div>
-        <NavLinks itens={itens} />
+        <nav className="navlinks" aria-label="Menu principal">
+          <NavLinks itens={itens} />
+        </nav>
         <div className="rodape">
           <b>{u.nome}</b>
           <span>{PAPEL_LABEL[u.papel]}</span>
