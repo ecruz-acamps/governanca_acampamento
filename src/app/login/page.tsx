@@ -1,11 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('ok')) setAviso('Senha alterada. Entre com a nova senha.');
+  }, []);
 
   async function entrar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,6 +40,7 @@ export default function LoginPage() {
         <h1>Governança</h1>
         <p className="muted">Associação dos Campistas São Padre Pio</p>
         <form onSubmit={entrar}>
+          {aviso && <div className="flash ok">{aviso}</div>}
           {erro && <div className="flash erro" role="alert">{erro}</div>}
           <label className="campo">
             E-mail
@@ -49,6 +55,8 @@ export default function LoginPage() {
           </button>
         </form>
         <p className="muted" style={{ marginTop: 14, fontSize: 13 }}>
+          <a href="/esqueci-senha">Esqueci minha senha</a>
+          <br />
           Conta nova sem senha? <a href="/primeiro-acesso">Primeiro acesso</a>
         </p>
       </div>

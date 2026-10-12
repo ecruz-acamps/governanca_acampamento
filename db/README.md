@@ -7,3 +7,5 @@ ao recriar do zero use 001, depois 002 e 004, e troque `fn_auditar` para remover
 
 Migrações seguintes: 003 (geração de obrigações), 005 (uso único do token de SSO) e 006 (eleições: validação de
 candidaturas, voto secreto e apuração). Aplique em ordem numérica.
+
+A migração 007 cria `gov.reset_senha` (tokens de recuperação de senha, guardados só como hash).
