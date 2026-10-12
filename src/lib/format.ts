@@ -187,3 +187,11 @@ export function lerValor(txt: string | null): number | null {
   const n = limpo.includes(',') ? Number(limpo.replace(/\./g, '').replace(',', '.')) : Number(limpo);
   return Number.isFinite(n) ? n : null;
 }
+
+export const ELEICAO_STATUS: Record<string, { rotulo: string; tom: string }> = {
+  planejada: { rotulo: 'planejada', tom: 'mute' },
+  candidaturas: { rotulo: 'recebendo candidaturas', tom: 'warn' },
+  votacao: { rotulo: 'votação aberta', tom: 'warn' },
+  apurada: { rotulo: 'apurada', tom: 'ok' },
+  empossada: { rotulo: 'empossada', tom: 'ok' },
+};

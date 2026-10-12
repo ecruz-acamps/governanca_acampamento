@@ -15,6 +15,9 @@ const POR_RESTRICAO: Record<string, string> = {
   ck_despesa_autorizada: 'Toda despesa precisa de autorização da coordenação geral (Art. 20, b). Informe quem autorizou.',
   ck_baixa_autorizada: 'A baixa de bem exige deliberação aprovada em assembleia e parecer do Conselho Fiscal (Art. 5 par. único, 12 I e 22 d).',
   patrimonio_numero_tombo_key: 'Já existe um bem com esse número de tombo.',
+  ck_ate_30_nov: 'Art. 28: a eleição precisa ser realizada até 30 de novembro do ano.',
+  ux_candidatura_cargo_unico: 'Esse cargo já tem um candidato nesta eleição.',
+  ux_candidatura_pessoa_rodada: 'Essa pessoa já é candidata nesta rodada.',
   ck_email_minusculo: 'O e-mail precisa estar em letras minúsculas.',
 };
 
