@@ -26,7 +26,7 @@ export function urlBase(): string {
 
 type Mensagem = { para: string; assunto: string; texto: string; html: string };
 
-async function viaSmtp(m: Mensagem): Promise<boolean> {
+async function viaSmtp(m: Mensagem): Promise<void> {
   const porta = Number(process.env.SMTP_PORT || 465);
   const t = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -40,29 +40,28 @@ async function viaSmtp(m: Mensagem): Promise<boolean> {
     socketTimeout: 15000,
   });
   await t.sendMail({ from: remetente(), to: m.para, subject: m.assunto, text: m.texto, html: m.html });
-  return true;
 }
 
-async function viaResend(m: Mensagem): Promise<boolean> {
+async function viaResend(m: Mensagem): Promise<void> {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ from: remetente(), to: [m.para], subject: m.assunto, text: m.texto, html: m.html }),
     signal: AbortSignal.timeout(10000),
   });
-  if (!r.ok) {
-    console.error('Falha ao enviar e-mail (Resend)', r.status, (await r.text()).slice(0, 300));
-    return false;
-  }
-  return true;
+  if (!r.ok) throw new Error(`Resend respondeu ${r.status}: ${(await r.text()).slice(0, 200)}`);
 }
 
-export async function enviarEmail(m: Mensagem): Promise<boolean> {
-  if (!emailConfigurado()) return false;
+/** Devolve ok=true se enviou; senão, o motivo (curto, sem senhas) para registrar na auditoria. */
+export async function enviarEmail(m: Mensagem): Promise<{ ok: boolean; erro?: string }> {
+  if (!emailConfigurado()) return { ok: false, erro: 'envio de e-mail não configurado' };
   try {
-    return usaSmtp() ? await viaSmtp(m) : await viaResend(m);
+    if (usaSmtp()) await viaSmtp(m);
+    else await viaResend(m);
+    return { ok: true };
   } catch (e) {
-    console.error('Falha ao enviar e-mail', (e as Error)?.message ?? e);
-    return false;
+    const erro = String((e as Error)?.message ?? e).slice(0, 200);
+    console.error('Falha ao enviar e-mail', erro);
+    return { ok: false, erro };
   }
 }

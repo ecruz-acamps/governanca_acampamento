@@ -23,6 +23,7 @@ export async function pedirRedefinicao(formData: FormData) {
   const ip = (headers().get('x-forwarded-for') ?? '').split(',')[0].trim().slice(0, 80) || null;
   const token = randomBytes(32).toString('base64url');
   let enviar = false;
+  let usuarioId = '';
 
   try {
     await run(null, async (tx) => {
@@ -40,11 +41,12 @@ export async function pedirRedefinicao(formData: FormData) {
         insert into gov.reset_senha (usuario_id, token_hash, expira_em, ip)
         values (${u.id}, ${hashToken(token)}, now() + ${MINUTOS_VALIDADE + ' minutes'}::interval, ${ip})
       `;
+      usuarioId = u.id;
       enviar = true;
     });
     if (enviar) {
       const link = `${urlBase()}/redefinir-senha#t=${token}`;
-      await enviarEmail({
+      const r = await enviarEmail({
         para: email,
         assunto: 'Governança — crie uma nova senha',
         texto:
@@ -58,6 +60,10 @@ export async function pedirRedefinicao(formData: FormData) {
           `<p><a href="${link}" style="display:inline-block;background:#1f5e52;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600">Criar nova senha</a></p>` +
           `<p style="color:#5b6862;font-size:14px">O link vale por ${MINUTOS_VALIDADE} minutos e só pode ser usado uma vez.<br>Se não foi você, ignore este e-mail: a sua senha continua a mesma.</p></div>`,
       });
+      await run(null, (tx) => tx`
+        insert into gov.acesso_log (usuario_id, email, sucesso, motivo, ip)
+        values (${usuarioId}::uuid, ${email}, ${r.ok}, ${r.ok ? 'link de redefinição de senha enviado' : 'falha ao enviar e-mail de redefinição: ' + r.erro}, ${ip})
+      `);
     } else {
       // Mesmo tempo de resposta quando o e-mail não existe, para não revelar quem é cadastrado.
       await new Promise((r) => setTimeout(r, 700));
