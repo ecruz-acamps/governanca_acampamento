@@ -108,6 +108,9 @@ export async function abrirVotacao(formData: FormData) {
 export async function votar(formData: FormData) {
   const u = await requireUser();
   const id = idDe(formData);
+  // Associado vota pelo portal; a equipe, pela tela da eleição.
+  const retorno = nz(formData.get('retorno'));
+  const volta = retorno && /^\/portal(\/[a-z0-9-]*)*$/.test(retorno) ? retorno : `/eleicoes/${id}`;
   const votos: { candidatura_id: string; concordo: boolean }[] = [];
   for (const [k, v] of formData.entries()) {
     if (!k.startsWith('v_')) continue;
@@ -122,7 +125,7 @@ export async function votar(formData: FormData) {
       await tx`select gov.registrar_voto(${id}::uuid, ${a.associado_id}::uuid, ${JSON.stringify(votos)}::jsonb)`;
     });
   });
-  voltar(`/eleicoes/${id}`, 'Voto registrado. Obrigado!', erro);
+  voltar(volta, 'Voto registrado. Obrigado!', erro);
 }
 
 export async function apurar(formData: FormData) {

@@ -5,5 +5,5 @@ import { segredoSessao } from '@/lib/segredo';
 export default withAuth({ pages: { signIn: '/login' }, secret: segredoSessao() });
 
 export const config = {
-  matcher: ['/((?!login|sso|primeiro-acesso|api/auth|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!login|sso|verificar|primeiro-acesso|api/auth|_next/static|_next/image|favicon.ico).*)'],
 };

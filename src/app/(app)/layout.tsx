@@ -7,7 +7,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const u = await requireUser();
-  const itens: Item[] = [{ href: '/', label: 'Painel' }];
+  const itens: Item[] = [];
+  if (can(u.papel, 'painel:ler')) itens.push({ href: '/', label: 'Painel' });
+  if (u.associadoId) {
+    itens.push({ href: '/portal', label: 'Meu portal' });
+    itens.push({ href: '/portal/carteirinha', label: 'Minha carteirinha' });
+    itens.push({ href: '/portal/presenca', label: 'Minhas presenças' });
+  }
   if (can(u.papel, 'associados:ler')) itens.push({ href: '/associados', label: 'Associados' });
   if (can(u.papel, 'reunioes:ler')) itens.push({ href: '/reunioes', label: 'Reuniões e presença' });
   if (can(u.papel, 'mandatos:ler')) itens.push({ href: '/mandatos', label: 'Mandatos' });

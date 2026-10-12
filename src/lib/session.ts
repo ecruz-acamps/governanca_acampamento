@@ -11,6 +11,7 @@ export type Usuario = {
   nome: string;
   papel: Papel;
   precisaTrocar: boolean;
+  associadoId: string | null;
 };
 
 type Linha = {
@@ -20,6 +21,7 @@ type Linha = {
   papel: Papel;
   ativo: boolean;
   precisa_trocar_senha: boolean;
+  associado_id: string | null;
 };
 
 /** Lê o usuário a cada requisição: desativar uma conta vale na hora. */
@@ -29,10 +31,10 @@ export const getUsuario = cache(async (): Promise<Usuario | null> => {
   const uid = info?.uid;
   if (!uid) return null;
   const [u] = await run(null, (tx) => tx<Linha[]>`
-    select id, email, nome, papel, ativo, precisa_trocar_senha from gov.usuario where id = ${uid}
+    select id, email, nome, papel, ativo, precisa_trocar_senha, associado_id from gov.usuario where id = ${uid}
   `);
   if (!u || !u.ativo) return null;
-  return { id: u.id, email: u.email, nome: u.nome, papel: u.papel, precisaTrocar: u.precisa_trocar_senha && !info?.sso };
+  return { id: u.id, email: u.email, nome: u.nome, papel: u.papel, precisaTrocar: u.precisa_trocar_senha && !info?.sso, associadoId: u.associado_id };
 });
 
 export async function requireUser(opcoes?: { permitirTroca?: boolean }): Promise<Usuario> {
@@ -48,4 +50,11 @@ export async function requirePerm(perm: Perm): Promise<Usuario> {
     redirect('/?erro=' + encodeURIComponent('Você não tem permissão para esta área.'));
   }
   return u;
+}
+
+/** Área do associado: exige uma conta ligada a um cadastro de associado. */
+export async function requireAssociado(): Promise<Usuario & { associadoId: string }> {
+  const u = await requireUser();
+  if (!u.associadoId) redirect('/?erro=' + encodeURIComponent('Sua conta não está ligada a um associado.'));
+  return u as Usuario & { associadoId: string };
 }

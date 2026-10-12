@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { Chip, Flash, PageHead, type SP } from '@/components/ui';
 import { run } from '@/lib/db';
 import { anoAtual, CARGO_LABEL, fmtData } from '@/lib/format';
-import { requirePerm } from '@/lib/session';
+import { redirect } from 'next/navigation';
+import { can } from '@/lib/perms';
+import { requireUser } from '@/lib/session';
 
 const ORIGEM: Record<string, { rotulo: string; href: string }> = {
   obrigacao: { rotulo: 'Obrigação', href: '/calendario' },
@@ -16,7 +18,8 @@ const ORIGEM: Record<string, { rotulo: string; href: string }> = {
 type Alerta = { origem: string; descricao: string; prazo: string; situacao: string; dias: number };
 
 export default async function Painel({ searchParams }: { searchParams: SP }) {
-  const u = await requirePerm('painel:ler');
+  const u = await requireUser();
+  if (!can(u.papel, 'painel:ler')) redirect('/portal');
   const ano = anoAtual();
 
   const dados = await run(u.id, async (tx) => {
