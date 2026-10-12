@@ -166,13 +166,17 @@ As permissões completas estão em `src/lib/perms.ts`.
 ### Publicar na Vercel
 1. Importe o repositório na Vercel (framework: Next.js).
 2. Em *Settings > Environment Variables*, cadastre `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` e, se for usar, `SETUP_TOKEN` (apague depois) e `SSO_SECRET`.
-3. Para a recuperação de senha por e-mail, cadastre também `RESEND_API_KEY` e `EMAIL_FROM` (veja a seção *Recuperação de senha* abaixo).
+3. Para a recuperação de senha por e-mail, cadastre também as variáveis de SMTP ou do Resend (veja a seção *Recuperação de senha* abaixo).
 4. Deploy. O `vercel.json` já manda as funções para São Paulo.
 
 ### Recuperação de senha por e-mail
 Na tela de login, *Esqueci minha senha* pede o e-mail e envia um link para criar uma nova senha. O link vale por 30 minutos e só pode ser usado uma vez; o banco guarda apenas o hash do token. A resposta é sempre a mesma, exista o e-mail ou não, e há limite de 3 pedidos por hora por conta. Quem abre o link prova que controla o e-mail.
 
-Para funcionar, crie uma conta no [Resend](https://resend.com), verifique o domínio de envio e cadastre na Vercel `RESEND_API_KEY` e `EMAIL_FROM` (ex.: `Governança <nao-responda@seudominio.com.br>`). Sem isso, a tela avisa que o envio não está configurado e a senha continua sendo redefinida pelo administrador em *Usuários*. Opcional: `APP_URL` com o endereço público do sistema.
+Para funcionar, escolha **uma** das opções e cadastre as variáveis na Vercel:
+- **SMTP do e-mail profissional** (não precisa de serviço extra): `SMTP_HOST`, `SMTP_PORT` (465 ou 587), `SMTP_USER`, `SMTP_PASS` e, opcionalmente, `EMAIL_FROM`.
+- **Resend** ([resend.com](https://resend.com)): `RESEND_API_KEY` e `EMAIL_FROM`, com o domínio de envio verificado.
+
+Sem isso, a tela avisa que o envio não está configurado e a senha continua sendo redefinida pelo administrador em *Usuários*. Opcional: `APP_URL` com o endereço público do sistema.
 
 ### Banco de dados
 As migrações estão em `db/` (veja `db/README.md`). Nunca coloque a senha do banco em conversa ou em arquivo do repositório: ela só vai nas variáveis de ambiente da Vercel.
