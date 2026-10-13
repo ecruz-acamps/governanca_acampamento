@@ -195,3 +195,10 @@ export const ELEICAO_STATUS: Record<string, { rotulo: string; tom: string }> = {
   apurada: { rotulo: 'apurada', tom: 'ok' },
   empossada: { rotulo: 'empossada', tom: 'ok' },
 };
+
+export const MISSAO_STATUS: Record<string, { rotulo: string; tom: string }> = {
+  planejada: { rotulo: 'Planejada', tom: 'mute' },
+  em_andamento: { rotulo: 'Em andamento', tom: 'ok' },
+  concluida: { rotulo: 'Concluída', tom: 'ok' },
+  cancelada: { rotulo: 'Cancelada', tom: 'bad' },
+};

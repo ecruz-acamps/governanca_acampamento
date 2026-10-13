@@ -47,6 +47,7 @@ export default async function ReuniaoPage({ params, searchParams }: { params: { 
         sub={`${REUNIAO_LABEL[reuniao.tipo]} · ${fmtData(reuniao.data)}${reuniao.local ? ' · ' + reuniao.local : ''}`}
       >
         {!reuniao.conta_presenca && <Chip>Não conta para os 75%</Chip>}
+        <a className="btn sec" href={`/api/documentos/presenca/${reuniao.id}`} target="_blank" rel="noreferrer">Lista de presença (PDF)</a>
         <Link className="btn sec" href="/reunioes">Voltar</Link>
       </PageHead>
       <Flash ok={searchParams.ok} erro={searchParams.erro} />

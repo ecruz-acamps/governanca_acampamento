@@ -52,6 +52,7 @@ export default async function PrestacaoPage({ params, searchParams }: { params: 
     <>
       <PageHead titulo={PRESTACAO_TIPO_LABEL[p.tipo]} sub={`${fmtData(p.periodo_inicio)} a ${fmtData(p.periodo_fim)} · exercício ${p.exercicio}`}>
         <Chip tom={st.tom}>{st.rotulo}</Chip>
+        <a className="btn sec" href={`/api/documentos/balancete/${p.id}`} target="_blank" rel="noreferrer">Baixar PDF</a>
         <Link className="btn sec" href="/prestacoes">Voltar</Link>
       </PageHead>
       <Flash ok={searchParams.ok} erro={searchParams.erro} />

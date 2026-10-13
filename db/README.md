@@ -9,3 +9,5 @@ Migrações seguintes: 003 (geração de obrigações), 005 (uso único do token
 candidaturas, voto secreto e apuração). Aplique em ordem numérica.
 
 A migração 007 cria `gov.reset_senha` (tokens de recuperação de senha, guardados só como hash).
+
+A migração 008 cria as regras do Conselho Geral e das missões (Art. 25 e 26): uma designação aberta por associado, coordenador aprovado antes de a missão iniciar, equipe só de associados ativos, e auditoria.

@@ -66,6 +66,11 @@ export default async function AssembleiaPage({ params, searchParams }: { params:
     <>
       <PageHead titulo={a.titulo} sub={`${a.tipo} · ${a.convocacao_numero}ª convocação · realização ${fmtData(a.data_realizacao)}`}>
         <Chip tom={st.tom}>{st.rotulo}</Chip>
+        <a className="btn sec" href={`/api/documentos/edital/${a.id}`} target="_blank" rel="noreferrer">Edital (PDF)</a>
+        <a className="btn sec" href={`/api/documentos/presenca/${a.id}?t=assembleia`} target="_blank" rel="noreferrer">Lista de presença (PDF)</a>
+        {(a.status === 'instalada' || a.status === 'realizada') && (
+          <a className="btn sec" href={`/api/documentos/ata/${a.id}`} target="_blank" rel="noreferrer">Ata (PDF)</a>
+        )}
         <Link className="btn sec" href="/assembleias">Voltar</Link>
       </PageHead>
       <Flash ok={searchParams.ok} erro={searchParams.erro} />

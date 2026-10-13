@@ -57,6 +57,8 @@ Em resumo: **a dor era depender de lembrar das regras do estatuto na hora certa.
 - **Assembleias:** convocação, presença, quórum, deliberações e maioria.
 - **Disciplinar:** processo com consenso, medida, recurso e assembleia nos prazos do Art. 8.
 - **Eleições:** candidaturas, voto secreto, apuração, nova rodada e posse.
+- **Conselho Geral e missões (Art. 25 e 26):** membros designados pelo Orientador Espiritual; coordenador de missão só inicia depois de aprovado pelo Conselho Geral; pregadores e equipe aprovados pela coordenação.
+- **Documentos em PDF:** edital de convocação, ata de assembleia, lista de presença (reunião e assembleia) e balancete/prestação de contas, com assinaturas do Presidente, Secretário, Tesoureiro e Conselho Fiscal.
 - **Mandatos:** Diretoria e Conselho Fiscal, com ciclo de 3 anos.
 - **Financeiro, convênios e doações, prestação de contas:** lançamentos autorizados e comprovados, aceite com três aprovações, parecer do Conselho Fiscal e aprovação em assembleia.
 - **Patrimônio:** inventário e baixa de bens.
