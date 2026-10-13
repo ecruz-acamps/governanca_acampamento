@@ -12,6 +12,7 @@ export type Usuario = {
   papel: Papel;
   precisaTrocar: boolean;
   associadoId: string | null;
+  superadmin: boolean;
 };
 
 type Linha = {
@@ -22,6 +23,7 @@ type Linha = {
   ativo: boolean;
   precisa_trocar_senha: boolean;
   associado_id: string | null;
+  superadmin: boolean;
 };
 
 /** Lê o usuário a cada requisição: desativar uma conta vale na hora. */
@@ -31,10 +33,10 @@ export const getUsuario = cache(async (): Promise<Usuario | null> => {
   const uid = info?.uid;
   if (!uid) return null;
   const [u] = await run(null, (tx) => tx<Linha[]>`
-    select id, email, nome, papel, ativo, precisa_trocar_senha, associado_id from gov.usuario where id = ${uid}
+    select id, email, nome, papel, ativo, precisa_trocar_senha, associado_id, superadmin from gov.usuario where id = ${uid}
   `);
   if (!u || !u.ativo) return null;
-  return { id: u.id, email: u.email, nome: u.nome, papel: u.papel, precisaTrocar: u.precisa_trocar_senha && !info?.sso, associadoId: u.associado_id };
+  return { id: u.id, email: u.email, nome: u.nome, papel: u.papel, precisaTrocar: u.precisa_trocar_senha && !info?.sso, associadoId: u.associado_id, superadmin: u.superadmin };
 });
 
 export async function requireUser(opcoes?: { permitirTroca?: boolean }): Promise<Usuario> {
@@ -49,6 +51,13 @@ export async function requirePerm(perm: Perm): Promise<Usuario> {
   if (!can(u.papel, perm)) {
     redirect('/?erro=' + encodeURIComponent('Você não tem permissão para esta área.'));
   }
+  return u;
+}
+
+/** Área exclusiva do superadmin (apagar usuários, reiniciar o sistema). */
+export async function requireSuperadmin(): Promise<Usuario> {
+  const u = await requirePerm('usuarios:gerir');
+  if (!u.superadmin) redirect('/usuarios?erro=' + encodeURIComponent('Somente o superadmin pode fazer isso.'));
   return u;
 }
 
