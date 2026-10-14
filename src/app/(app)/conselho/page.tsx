@@ -19,7 +19,7 @@ export default async function ConselhoPage({ searchParams }: { searchParams: SP 
         from gov.conselho_geral_membro m join gov.associado a on a.id = m.associado_id
        where m.encerrado_em is null order by a.nome`;
     const missoes = await tx<Missao[]>`
-      select m.id, m.nome, m.data_inicio, m.data_fim, m.status, a.nome as coord, m.coordenador_aprovado_em as aprovado
+      select m.id, m.nome, m.data_inicio, m.data_fim, m.status, coalesce(a.nome, m.coordenador_nome) as coord, m.coordenador_aprovado_em as aprovado
         from gov.missao m left join gov.associado a on a.id = m.coordenador_id
        order by coalesce(m.data_inicio, m.criado_em::date) desc`;
     const candidatos = await tx<{ id: string; nome: string }[]>`
