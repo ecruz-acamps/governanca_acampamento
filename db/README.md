@@ -1,27 +1,24 @@
 # Banco de dados
 
-Projeto Supabase `governanca-spp` (ref `dftjwjnctawugdadnqlq`, região sa-east-1).
-Aplicado em duas migrações equivalentes a: 001 (base + auditoria sem senha_hash) e 002+004 (usuários com senha,
-log de acessos, auditoria seletiva de usuários, bucket privado). Os arquivos 001–004 desta pasta são o registro;
-ao recriar do zero use 001, depois 002 e 004, e troque `fn_auditar` para remover `senha_hash` do JSON auditado.
+Projeto Supabase `governanca-spp` (ref `dftjwjnctawugdadnqlq`, região sa-east-1). Aplique as migrações em ordem
+numérica e **antes** de publicar o código que depende delas. Nunca coloque a senha do banco em conversa ou arquivo.
 
-Migrações seguintes: 003 (geração de obrigações), 005 (uso único do token de SSO) e 006 (eleições: validação de
-candidaturas, voto secreto e apuração). Aplique em ordem numérica.
+| Migração | O que faz |
+|---|---|
+| 001 | Base: associados, assembleias, mandatos, financeiro, patrimônio etc., com auditoria (sem `senha_hash`) e RLS |
+| 002 | Usuários, papéis e log de acessos |
+| 003 | Geração de obrigações do calendário |
+| 004 | Senha própria (hash Argon2id) |
+| 005 | Uso único do token de SSO |
+| 006 | Eleições: candidaturas, voto secreto e apuração |
+| 007 | Recuperação de senha (`gov.reset_senha`, token só como hash) |
+| 008 | Conselho Geral e missões (Art. 25 e 26): uma designação aberta por associado, coordenador aprovado antes de a missão iniciar |
+| 009 | Superadmin (único que apaga usuários) e a função `gov.resetar_sistema` |
+| 010 | Coordenador e auxiliares de missão que não são associados (nome livre) |
+| 011 | Divisão de fichas por núcleo: núcleos, distribuições, pré-fichas e reserva |
+| 012 | Os núcleos (Palhoça por paróquia) e a separação dentro/fora da Arquidiocese |
+| 013 | Distribuição de fichas ligada a uma missão |
+| 014 | Núcleo Santa Rosa / Armazém |
+| 015 | Área de patrimônio do usuário (só a da secretaria acessa as fichas) |
 
-A migração 007 cria `gov.reset_senha` (tokens de recuperação de senha, guardados só como hash).
-
-A migração 008 cria as regras do Conselho Geral e das missões (Art. 25 e 26): uma designação aberta por associado, coordenador aprovado antes de a missão iniciar, equipe só de associados ativos, e auditoria.
-
-A migração 009 cria o superadmin (único que apaga usuários e reinicia o sistema) e a função `gov.resetar_sistema`. Aplique a 009 ANTES de publicar o código que a usa.
-
-A migração 010 permite coordenador e auxiliares de missão que não são associados (nome livre). Aplique a 010 ANTES de publicar o código que a usa.
-
-A migração 011 cria a divisão de fichas por núcleo (núcleos, distribuições e pré-fichas). Aplique a 010 e a 011 ANTES de publicar o código.
-
-A migração 012 cadastra os 13 núcleos e a separação dentro/fora da Arquidiocese (Anitápolis e Garopaba). Aplique 010, 011 e 012 ANTES de publicar o código.
-
-A migração 013 liga a divisão de fichas a uma missão. Aplique 010, 011, 012 e 013 ANTES de publicar o código.
-
-A migração 014 cadastra o núcleo Santa Rosa / Armazém (só dados, sem mudança de código).
-
-A migração 015 cria a área de patrimônio do usuário (só a da secretaria acessa as fichas). Aplique a 015 ANTES de publicar o código.
+Ao recriar do zero use 001, depois 002 e 004, e troque `fn_auditar` para remover `senha_hash` do JSON auditado.

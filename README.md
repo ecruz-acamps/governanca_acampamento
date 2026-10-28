@@ -58,12 +58,13 @@ Em resumo: **a dor era depender de lembrar das regras do estatuto na hora certa.
 - **Disciplinar:** processo com consenso, medida, recurso e assembleia nos prazos do Art. 8.
 - **Eleições:** candidaturas, voto secreto, apuração, nova rodada e posse.
 - **Conselho Geral e missões (Art. 25 e 26):** membros designados pelo Orientador Espiritual; coordenador de missão só inicia depois de aprovado pelo Conselho Geral; coordenadores, pregadores e auxiliares podem ser associados ou pessoas de fora (nome e contato).
-- **Fichas por núcleo:** divide as 120 fichas entre os núcleos pelas pré-fichas (lista de espera) de cada um. Anitápolis tem 10 fixas e Alfredo Wagner 2 de cortesia, que saem antes da divisão; a reserva de 8 (emergência e padres) fica fora.
+- **Fichas por núcleo:** divide as fichas do acampamento entre os 14 núcleos pelas pré-fichas (lista de espera) de cada um. O total é definido por missão e pode mudar a qualquer momento: Anitápolis (10 fixas, acordo com a prefeitura) e Alfredo Wagner (2 de cortesia, não é núcleo) saem antes da divisão, e o aumento do total vai só para os demais núcleos. A reserva (8 fichas de emergência e padres) fica fora da conta. Anitápolis e Garopaba registram pré-fichas de dentro e de fora da Arquidiocese.
 - **Documentos em PDF:** edital de convocação, ata de assembleia, lista de presença (reunião e assembleia) e balancete/prestação de contas, com assinaturas do Presidente, Secretário, Tesoureiro e Conselho Fiscal.
 - **Mandatos:** Diretoria e Conselho Fiscal, com ciclo de 3 anos.
 - **Financeiro, convênios e doações, prestação de contas:** lançamentos autorizados e comprovados, aceite com três aprovações, parecer do Conselho Fiscal e aprovação em assembleia.
-- **Patrimônio:** inventário e baixa de bens.
+- **Patrimônio:** inventário e baixa de bens. Cada coordenador de patrimônio tem uma área (ex.: secretaria), porque haverá vários patrimônios.
 - **Calendário de obrigações, usuários e auditoria.**
+- **Superadmin:** conta única que apaga usuários e tem o botão *Reiniciar o sistema*, que apaga todos os dados e mantém só a própria conta (pede a frase `APAGAR TUDO` e a senha). Só ele altera a própria conta.
 
 **Associado (portal)**
 - Situação e presença dele, próximas reuniões e assembleias.
@@ -131,6 +132,14 @@ public/          ícones, service worker e página offline
 2. O Conselho Fiscal registra o parecer.
 3. Leve à assembleia e marque como aprovada. O balancete anual exige deliberação aprovada de "Contas anuais".
 
+**Dividir as fichas do acampamento**
+1. *Conselho Geral e missões*: crie a missão (ex.: 12º Acampamento). Coordenador, pregadores e auxiliares podem ser pessoas de fora; o coordenador precisa da aprovação do Conselho Geral para a missão iniciar.
+2. *Fichas por núcleo* > *Nova distribuição*: escolha a missão e informe as fichas para os núcleos e a reserva.
+3. Preencha as **pré-fichas** de cada núcleo conforme eles responderem e clique em *Salvar e recalcular*. A tela mostra a porcentagem e as fichas de cada núcleo, e a soma fecha no total.
+4. Se o total mudar, altere o número e recalcule: só os núcleos proporcionais ganham ou perdem fichas.
+
+**Gerar documentos em PDF.** Na assembleia: edital, lista de presença e ata (depois de instalada). Na reunião: lista de presença. Na prestação de contas: *Baixar PDF*. Horário e local da assembleia saem em branco para preencher à mão.
+
 **Aceitar doação ou convênio.** Registre em *Convênios e doações* e colete as três aprovações. Só depois dá para aceitar e usar o convênio em lançamentos de verba pública.
 
 **Patrimônio.** Cadastre os bens no inventário. Para dar baixa, é preciso uma deliberação aprovada de alienação e a data do parecer do Conselho Fiscal.
@@ -143,14 +152,17 @@ public/          ícones, service worker e página offline
 
 | Papel | Pode |
 |---|---|
-| Administrador | Tudo, inclusive usuários e auditoria |
+| Superadmin | Tudo, e é o único que apaga usuários e reinicia o sistema |
+| Administrador | Quase tudo, inclusive usuários (sem apagar) e auditoria |
 | Presidente, vice-presidente | Operar assembleias, eleições, disciplina, finanças e patrimônio conforme o caso |
 | Secretário | Associados, reuniões, assembleias, mandatos, eleições, calendário |
-| Tesoureiro | Financeiro, convênios, prestação de contas |
+| Tesoureiro | Financeiro, convênios, prestação de contas e fichas |
 | Conselho Fiscal | Consulta financeira e parecer das prestações |
-| Coord. de patrimônio | Patrimônio |
+| Coord. de patrimônio | Patrimônio; e as fichas, só se for o da área **secretaria** |
 | Coord. eclesiástico | Associados e disciplinar |
 | Associado | Só o próprio portal |
+
+**Fichas por núcleo:** acessam e editam presidente, secretário, tesoureiro, coordenador do patrimônio da secretaria e superadmin. Os demais papéis não veem a tela.
 
 As permissões completas estão em `src/lib/perms.ts`.
 
@@ -182,7 +194,7 @@ Para funcionar, escolha **uma** das opções e cadastre as variáveis na Vercel:
 Sem isso, a tela avisa que o envio não está configurado e a senha continua sendo redefinida pelo administrador em *Usuários*. Opcional: `APP_URL` com o endereço público do sistema.
 
 ### Banco de dados
-As migrações estão em `db/` (veja `db/README.md`). Nunca coloque a senha do banco em conversa ou em arquivo do repositório: ela só vai nas variáveis de ambiente da Vercel.
+As migrações (001 a 015) estão em `db/` (veja `db/README.md`) e devem ser aplicadas em ordem numérica, **antes** de publicar o código que depende delas. Nunca coloque a senha do banco em conversa ou em arquivo do repositório: ela só vai nas variáveis de ambiente da Vercel.
 
 ### Acesso direto de outro sistema (SSO)
 Veja `docs/sso.md`. Requer `SSO_SECRET` (mínimo 32 caracteres) na Vercel e no sistema interno.
