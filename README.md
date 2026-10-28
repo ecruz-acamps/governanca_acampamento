@@ -64,6 +64,7 @@ Em resumo: **a dor era depender de lembrar das regras do estatuto na hora certa.
 - **Financeiro, convênios e doações, prestação de contas:** lançamentos autorizados e comprovados, aceite com três aprovações, parecer do Conselho Fiscal e aprovação em assembleia.
 - **Patrimônio:** inventário e baixa de bens. Cada coordenador de patrimônio tem uma área (ex.: secretaria), porque haverá vários patrimônios.
 - **Calendário de obrigações, usuários e auditoria.**
+- **API (só superadmin):** busca as pré-fichas de cada núcleo no banco de outro sistema, por uma API protegida por token, para não precisar perguntar a cada núcleo. Mostra uma prévia (hoje x API) antes de gravar e guarda o histórico. Contrato em `docs/api-pre-fichas.md`.
 - **Superadmin:** conta única que apaga usuários e tem o botão *Reiniciar o sistema*, que apaga todos os dados e mantém só a própria conta (pede a frase `APAGAR TUDO` e a senha). Só ele altera a própria conta.
 
 **Associado (portal)**
@@ -195,6 +196,9 @@ Sem isso, a tela avisa que o envio não está configurado e a senha continua sen
 
 ### Banco de dados
 As migrações (001 a 015) estão em `db/` (veja `db/README.md`) e devem ser aplicadas em ordem numérica, **antes** de publicar o código que depende delas. Nunca coloque a senha do banco em conversa ou em arquivo do repositório: ela só vai nas variáveis de ambiente da Vercel.
+
+### API de pré-fichas
+Cadastre `PREFICHAS_API_URL` e `PREFICHAS_API_TOKEN` na Vercel (veja `docs/api-pre-fichas.md`). A aba *API* é visível só ao superadmin.
 
 ### Acesso direto de outro sistema (SSO)
 Veja `docs/sso.md`. Requer `SSO_SECRET` (mínimo 32 caracteres) na Vercel e no sistema interno.
