@@ -21,3 +21,5 @@ A migração 011 cria a divisão de fichas por núcleo (núcleos, distribuiçõe
 A migração 012 cadastra os 13 núcleos e a separação dentro/fora da Arquidiocese (Anitápolis e Garopaba). Aplique 010, 011 e 012 ANTES de publicar o código.
 
 A migração 013 liga a divisão de fichas a uma missão. Aplique 010, 011, 012 e 013 ANTES de publicar o código.
+
+A migração 014 cadastra o núcleo Santa Rosa / Armazém (só dados, sem mudança de código).
