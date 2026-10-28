@@ -58,6 +58,7 @@ Em resumo: **a dor era depender de lembrar das regras do estatuto na hora certa.
 - **Disciplinar:** processo com consenso, medida, recurso e assembleia nos prazos do Art. 8.
 - **Eleições:** candidaturas, voto secreto, apuração, nova rodada e posse.
 - **Conselho Geral e missões (Art. 25 e 26):** membros designados pelo Orientador Espiritual; coordenador de missão só inicia depois de aprovado pelo Conselho Geral; coordenadores, pregadores e auxiliares podem ser associados ou pessoas de fora (nome e contato).
+- **Fichas por núcleo:** divide as 120 fichas entre os núcleos pelas pré-fichas (lista de espera) de cada um. Anitápolis tem 10 fixas e Alfredo Wagner 2 de cortesia, que saem antes da divisão; a reserva de 8 (emergência e padres) fica fora.
 - **Documentos em PDF:** edital de convocação, ata de assembleia, lista de presença (reunião e assembleia) e balancete/prestação de contas, com assinaturas do Presidente, Secretário, Tesoureiro e Conselho Fiscal.
 - **Mandatos:** Diretoria e Conselho Fiscal, com ciclo de 3 anos.
 - **Financeiro, convênios e doações, prestação de contas:** lançamentos autorizados e comprovados, aceite com três aprovações, parecer do Conselho Fiscal e aprovação em assembleia.

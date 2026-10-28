@@ -15,3 +15,5 @@ A migração 008 cria as regras do Conselho Geral e das missões (Art. 25 e 26):
 A migração 009 cria o superadmin (único que apaga usuários e reinicia o sistema) e a função `gov.resetar_sistema`. Aplique a 009 ANTES de publicar o código que a usa.
 
 A migração 010 permite coordenador e auxiliares de missão que não são associados (nome livre). Aplique a 010 ANTES de publicar o código que a usa.
+
+A migração 011 cria a divisão de fichas por núcleo (núcleos, distribuições e pré-fichas). Aplique a 010 e a 011 ANTES de publicar o código.
