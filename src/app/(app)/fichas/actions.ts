@@ -41,9 +41,10 @@ export async function salvarDistribuicao(formData: FormData) {
     await tx`update gov.distribuicao_fichas set total_fichas = ${total}, reserva_fichas = ${reserva} where id = ${id}`;
     for (const n of nucleos) {
       const pre = inteiroOuNulo(formData.get(`pre_${n}`)) ?? 0;
+      const fora = inteiroOuNulo(formData.get(`fora_${n}`)) ?? 0;
       await tx`
-        insert into gov.distribuicao_pre (distribuicao_id, nucleo_id, pre_fichas) values (${id}, ${n}, ${pre})
-        on conflict (distribuicao_id, nucleo_id) do update set pre_fichas = excluded.pre_fichas`;
+        insert into gov.distribuicao_pre (distribuicao_id, nucleo_id, pre_fichas, pre_fora) values (${id}, ${n}, ${pre}, ${fora})
+        on conflict (distribuicao_id, nucleo_id) do update set pre_fichas = excluded.pre_fichas, pre_fora = excluded.pre_fora`;
     }
   }));
   voltar(aqui(id), 'Distribuição recalculada.', erro);

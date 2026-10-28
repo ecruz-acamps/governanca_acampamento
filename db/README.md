@@ -17,3 +17,5 @@ A migração 009 cria o superadmin (único que apaga usuários e reinicia o sist
 A migração 010 permite coordenador e auxiliares de missão que não são associados (nome livre). Aplique a 010 ANTES de publicar o código que a usa.
 
 A migração 011 cria a divisão de fichas por núcleo (núcleos, distribuições e pré-fichas). Aplique a 010 e a 011 ANTES de publicar o código.
+
+A migração 012 cadastra os 13 núcleos e a separação dentro/fora da Arquidiocese (Anitápolis e Garopaba). Aplique 010, 011 e 012 ANTES de publicar o código.

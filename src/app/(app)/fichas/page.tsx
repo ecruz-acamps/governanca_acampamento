@@ -8,7 +8,7 @@ import { requirePerm } from '@/lib/session';
 import { alternarNucleo, criarDistribuicao, criarNucleo, excluirDistribuicao, salvarDistribuicao, salvarNucleo } from './actions';
 
 type Dist = { id: string; titulo: string; ano: number; total_fichas: number; reserva_fichas: number };
-type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; ativo: boolean; pre_fichas: number };
+type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; ativo: boolean; pre_fichas: number; pre_fora: number; separa_origem: boolean };
 
 export default async function FichasPage({ searchParams }: { searchParams: SP & { d?: string } }) {
   const u = await requirePerm('fichas:ler');
@@ -18,7 +18,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
     const dists = await tx<Dist[]>`select id, titulo, ano, total_fichas, reserva_fichas from gov.distribuicao_fichas order by ano desc, criado_em desc`;
     const sel = dists.find((d) => d.id === searchParams.d) ?? dists[0] ?? null;
     const nucleos = await tx<Nuc[]>`
-      select n.id, n.nome, n.tipo, n.fichas_fixas, n.ativo, coalesce(p.pre_fichas, 0) as pre_fichas
+      select n.id, n.nome, n.tipo, n.fichas_fixas, n.ativo, n.separa_origem, coalesce(p.pre_fichas, 0) as pre_fichas, coalesce(p.pre_fora, 0) as pre_fora
         from gov.nucleo n
         left join gov.distribuicao_pre p on p.nucleo_id = n.id and p.distribuicao_id = ${sel?.id && isUuid(sel.id) ? sel.id : null}
        order by n.ativo desc, n.tipo, n.nome`;
@@ -27,7 +27,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
 
   const ativos = nucleos.filter((n) => n.ativo);
   const entradas: NucleoEntrada[] = ativos.map((n) => ({
-    id: n.id, nome: n.nome, tipo: n.tipo, fichasFixas: n.fichas_fixas, preFichas: n.pre_fichas,
+    id: n.id, nome: n.nome, tipo: n.tipo, fichasFixas: n.fichas_fixas, preFichas: n.pre_fichas + (n.separa_origem ? n.pre_fora : 0),
   }));
   const calc = sel ? distribuirFichas(sel.total_fichas, entradas) : null;
   const porId = new Map(calc?.linhas.map((l) => [l.id, l]) ?? []);
@@ -84,7 +84,13 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
                         {n.tipo === 'cortesia' ? <Chip tom="warn">cortesia (não é núcleo)</Chip> : fixo ? <Chip tom="warn">fixo</Chip> : null}
                       </td>
                       <td>
-                        {fixo
+                        {n.separa_origem ? (
+                          <div className="acoes">
+                            <label className="muted">dentro <input type="number" name={`pre_${n.id}`} min={0} defaultValue={n.pre_fichas} style={{ maxWidth: 90 }} /></label>
+                            <label className="muted">fora <input type="number" name={`fora_${n.id}`} min={0} defaultValue={n.pre_fora} style={{ maxWidth: 90 }} /></label>
+                            {fixo && <span className="muted">(fixo: não entra no cálculo)</span>}
+                          </div>
+                        ) : fixo
                           ? <span className="muted">não entra no cálculo</span>
                           : <input type="number" name={`pre_${n.id}`} min={0} defaultValue={n.pre_fichas} style={{ maxWidth: 110 }} />}
                       </td>
