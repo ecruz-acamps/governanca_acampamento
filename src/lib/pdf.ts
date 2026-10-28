@@ -1,4 +1,5 @@
-import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from 'pdf-lib';
+import { LOGO_PNG_B64 } from '@/lib/logo-b64';
 
 export const ENTIDADE = 'Associação dos Campistas São Padre Pio';
 const A4: [number, number] = [595.28, 841.89];
@@ -21,6 +22,7 @@ export class Doc {
   private serifB!: PDFFont;
   private sans!: PDFFont;
   private sansB!: PDFFont;
+  private logo: PDFImage | null = null;
   private y = 0;
   private n = 0;
 
@@ -36,6 +38,7 @@ export class Doc {
     d.serifB = await d.pdf.embedFont(StandardFonts.TimesRomanBold);
     d.sans = await d.pdf.embedFont(StandardFonts.Helvetica);
     d.sansB = await d.pdf.embedFont(StandardFonts.HelveticaBold);
+    try { d.logo = await d.pdf.embedPng(Buffer.from(LOGO_PNG_B64, 'base64')); } catch { d.logo = null; }
     d.nova();
     return d;
   }
@@ -69,6 +72,11 @@ export class Doc {
 
   /** Cabeçalho institucional centralizado. */
   cabecalho(sub?: string) {
+    if (this.logo) {
+      const t = 54;
+      this.page.drawImage(this.logo, { x: (A4[0] - t) / 2, y: this.y - t + 12, width: t, height: t });
+      this.y -= t + 2;
+    }
     this.centro(ENTIDADE.toUpperCase(), this.serifB, 13);
     if (sub) this.centro(sub, this.serif, 10);
     this.y -= 4;

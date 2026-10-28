@@ -37,6 +37,8 @@ export default function LoginPage() {
   return (
     <div className="login">
       <div className="box">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="logo" src="/logo.png" alt="Acampamento São Padre Pio" width={110} height={110} />
         <h1>Governança</h1>
         <p className="muted">Associação dos Campistas São Padre Pio</p>
         <form onSubmit={entrar}>

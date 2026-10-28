@@ -1,6 +1,6 @@
 // Service worker mínimo. NÃO guarda páginas nem dados do sistema (são privados):
 // só arquivos estáticos e uma página de "sem conexão" quando a rede cai.
-const VERSAO = 'gov-v1';
+const VERSAO = 'gov-v2';
 const OFFLINE = '/offline.html';
 
 self.addEventListener('install', (e) => {

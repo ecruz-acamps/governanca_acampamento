@@ -1,5 +1,7 @@
 # Governança — Associação dos Campistas São Padre Pio
 
+<p align="center"><img src="public/logo.png" alt="Acampamento São Padre Pio" width="140"></p>
+
 Sistema web que faz a associação **cumprir o próprio estatuto** sem depender de memória, planilha ou caderno. O que o estatuto exige (prazos, quórum, votações, prestação de contas, mandatos) vira regra do sistema, e o sistema avisa quando algo está vencendo ou fora do que o estatuto permite.
 
 > Base normativa: Estatuto Social, Segundo Instrumento de Alteração (26/08/2023). O estatuto **não foi alterado**: o sistema se adapta a ele, não o contrário.
@@ -66,6 +68,8 @@ Em resumo: **a dor era depender de lembrar das regras do estatuto na hora certa.
 - **Calendário de obrigações, usuários e auditoria.**
 - **API (só superadmin):** busca as pré-fichas de cada núcleo no banco de outro sistema, por uma API protegida por token, para não precisar perguntar a cada núcleo. Mostra uma prévia (hoje x API) antes de gravar e guarda o histórico. Contrato em `docs/api-pre-fichas.md`.
 - **Superadmin:** conta única que apaga usuários e tem o botão *Reiniciar o sistema*, que apaga todos os dados e mantém só a própria conta (pede a frase `APAGAR TUDO` e a senha). Só ele altera a própria conta.
+
+**Identidade visual:** a logo do Acampamento São Padre Pio aparece no menu, no login, nos PDFs e nos ícones do aplicativo, e as cores do sistema vêm do aro da logo (azul, preto, vermelho, verde, amarelo, roxo, laranja e marrom). As cores ficam no topo de `src/app/globals.css`.
 
 **Associado (portal)**
 - Situação e presença dele, próximas reuniões e assembleias.

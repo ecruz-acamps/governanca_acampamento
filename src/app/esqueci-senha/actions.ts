@@ -57,7 +57,7 @@ export async function pedirRedefinicao(formData: FormData) {
           `<div style="font-family:system-ui,sans-serif;max-width:480px;color:#17231f">` +
           `<h2 style="margin:0 0 12px">Crie uma nova senha</h2>` +
           `<p>Recebemos um pedido para criar uma nova senha no sistema de Governança da Associação dos Campistas São Padre Pio.</p>` +
-          `<p><a href="${link}" style="display:inline-block;background:#1f5e52;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600">Criar nova senha</a></p>` +
+          `<p><a href="${link}" style="display:inline-block;background:#014caa;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600">Criar nova senha</a></p>` +
           `<p style="color:#5b6862;font-size:14px">O link vale por ${MINUTOS_VALIDADE} minutos e só pode ser usado uma vez.<br>Se não foi você, ignore este e-mail: a sua senha continua a mesma.</p></div>`,
       });
       await run(null, (tx) => tx`

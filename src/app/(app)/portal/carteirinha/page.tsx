@@ -16,7 +16,7 @@ export default async function CarteirinhaPage() {
   const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000';
   const proto = h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
   const url = `${proto}://${host}/verificar/${codigoCarteirinha(u.associadoId)}`;
-  const svg = await QRCode.toString(url, { type: 'svg', margin: 1, errorCorrectionLevel: 'M', color: { dark: '#14352e', light: '#ffffff' } });
+  const svg = await QRCode.toString(url, { type: 'svg', margin: 1, errorCorrectionLevel: 'M', color: { dark: '#16314d', light: '#ffffff' } });
   const ativo = a.status === 'associado';
 
   return (

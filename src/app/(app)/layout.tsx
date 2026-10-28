@@ -35,8 +35,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="shell">
       <aside className="side">
         <div className="marca">
-          Governança
-          <small>Assoc. dos Campistas São Padre Pio</small>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Acampamento São Padre Pio" width={46} height={46} />
+          <span>
+            Governança
+            <small>Assoc. dos Campistas São Padre Pio</small>
+          </span>
         </div>
         <nav className="navlinks" aria-label="Menu principal">
           <NavLinks itens={itens} />
