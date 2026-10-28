@@ -4,6 +4,7 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     serverComponentsExternalPackages: ['@node-rs/argon2', 'postgres'],
+    outputFileTracingIncludes: { '/api/documentos/fichas/[id]': ['./src/assets/ficha-modelo.pdf'] },
   },
   async headers() {
     return [

@@ -1,13 +1,16 @@
 import Link from 'next/link';
 import { Campo, Chip, Flash, PageHead, type SP } from '@/components/ui';
 import { run } from '@/lib/db';
-import { distribuirFichas, type NucleoEntrada } from '@/lib/fichas';
+import { distribuirFichas, faixasFichas, type NucleoEntrada } from '@/lib/fichas';
 import { isUuid } from '@/lib/form';
 import { can } from '@/lib/perms';
 import { requirePerm } from '@/lib/session';
-import { alternarNucleo, criarDistribuicao, criarNucleo, excluirDistribuicao, salvarDistribuicao, salvarNucleo } from './actions';
+import { alternarNucleo, criarDistribuicao, criarNucleo, excluirDistribuicao, salvarDadosFichas, salvarDistribuicao, salvarNucleo } from './actions';
 
-type Dist = { id: string; titulo: string; ano: number; total_fichas: number; reserva_fichas: number; missao: string | null };
+type Dist = { id: string; titulo: string; ano: number; total_fichas: number; reserva_fichas: number; missao: string | null;
+  m_inicio: string | null; m_fim: string | null; ficha_missao_numero: string | null; ficha_saida: string | null; ficha_encerramento: string | null;
+  ficha_valor: string | null; ficha_pix: string | null; ficha_contato: string | null; ficha_inicio: number;
+};
 type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; ativo: boolean; pre_fichas: number; pre_fora: number; separa_origem: boolean };
 
 export default async function FichasPage({ searchParams }: { searchParams: SP & { d?: string } }) {
@@ -15,7 +18,9 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
   const podeEscrever = can(u.papel, 'fichas:escrever', u.superadmin, u.areaPatrimonio);
 
   const { dists, sel, nucleos, missoes } = await run(u.id, async (tx) => {
-    const dists = await tx<Dist[]>`select d.id, d.titulo, d.ano, d.total_fichas, d.reserva_fichas, m.nome as missao
+    const dists = await tx<Dist[]>`select d.id, d.titulo, d.ano, d.total_fichas, d.reserva_fichas, m.nome as missao,
+              m.data_inicio::text as m_inicio, m.data_fim::text as m_fim, d.ficha_missao_numero, d.ficha_saida::text, d.ficha_encerramento::text,
+              d.ficha_valor::text, d.ficha_pix, d.ficha_contato, d.ficha_inicio
         from gov.distribuicao_fichas d left join gov.missao m on m.id = d.missao_id
        order by d.ano desc, d.criado_em desc`;
     const sel = dists.find((d) => d.id === searchParams.d) ?? dists[0] ?? null;
@@ -37,6 +42,10 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
   }));
   const calc = sel ? distribuirFichas(sel.total_fichas, entradas) : null;
   const porId = new Map(calc?.linhas.map((l) => [l.id, l]) ?? []);
+  const faixas = sel && calc ? faixasFichas(calc.linhas, sel.reserva_fichas, sel.ficha_inicio) : [];
+  const fichasProntas = !!(sel && sel.ficha_missao_numero && sel.ficha_saida && sel.ficha_encerramento && sel.ficha_valor && sel.ficha_pix && sel.ficha_contato);
+  const pad = (n: number) => String(n).padStart(3, '0');
+  const numPadrao = sel?.ficha_missao_numero ?? sel?.missao?.match(/\d{1,3}/)?.[0] ?? '';
   const qtdNucleos = ativos.filter((n) => n.tipo === 'nucleo').length;
 
   return (
@@ -118,6 +127,54 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
             para os núcleos proporcionais; Anitápolis e a cortesia não mudam.
           </p>
         </form>
+      )}
+
+
+      {sel && calc && (
+        <div className="card tabela">
+          <h2>Fichas de inscrição em PDF</h2>
+          <p className="muted">Gera as fichas numeradas a partir do modelo. Cada núcleo recebe uma faixa contínua de números; a reserva fica no fim. Cada PDF traz as 4 páginas de cada ficha, pronto para imprimir.</p>
+          <form action={salvarDadosFichas}>
+            <input type="hidden" name="id" value={sel.id} />
+            <fieldset disabled={!podeEscrever}>
+              <div className="form-grid">
+                <Campo label="Nº da missão" dica="ex.: 23 (sai como 23º Acampamento Sênior)"><input type="text" name="missao_numero" inputMode="numeric" maxLength={3} defaultValue={numPadrao} required /></Campo>
+                <Campo label="Saída"><input type="date" name="saida" defaultValue={sel.ficha_saida ?? sel.m_inicio ?? ''} required /></Campo>
+                <Campo label="Encerramento"><input type="date" name="encerramento" defaultValue={sel.ficha_encerramento ?? sel.m_fim ?? ''} required /></Campo>
+                <Campo label="Valor da inscrição (R$)"><input type="text" name="valor" inputMode="decimal" defaultValue={sel.ficha_valor ?? ''} required /></Campo>
+                <Campo label="Chave PIX"><input type="text" name="pix" maxLength={120} defaultValue={sel.ficha_pix ?? ''} required /></Campo>
+                <Campo label="Contato do financeiro"><input type="text" name="contato" maxLength={120} defaultValue={sel.ficha_contato ?? ''} placeholder="(48) 99999-9999" required /></Campo>
+                <Campo label="Primeira ficha nº"><input type="number" name="inicio" min={1} max={9999} defaultValue={sel.ficha_inicio} required /></Campo>
+              </div>
+              {podeEscrever && <div style={{ marginTop: 14 }}><button className="btn" type="submit">Salvar dados das fichas</button></div>}
+            </fieldset>
+          </form>
+
+          {faixas.length > 0 && (
+            <table style={{ marginTop: 16 }}>
+              <thead><tr><th>Núcleo</th><th>Fichas</th><th>Numeração</th><th>PDF</th></tr></thead>
+              <tbody>
+                {faixas.map((f) => (
+                  <tr key={f.chave}>
+                    <td>{f.nome}</td>
+                    <td>{f.qtd}</td>
+                    <td>{pad(f.de)} a {pad(f.ate)}</td>
+                    <td>{fichasProntas
+                      ? <a className="btn sec mini" href={`/api/documentos/fichas/${sel.id}?n=${f.chave}`} target="_blank" rel="noopener">Baixar</a>
+                      : <span className="muted">salve os dados acima</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td><b>Todas</b></td><td><b>{faixas.reduce((a, f) => a + f.qtd, 0)}</b></td><td>{pad(faixas[0].de)} a {pad(faixas[faixas.length - 1].ate)}</td>
+                  <td>{fichasProntas ? <a className="btn mini" href={`/api/documentos/fichas/${sel.id}`} target="_blank" rel="noopener">Baixar todas</a> : null}</td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+          <p className="muted" style={{ marginTop: 10 }}>Se as pré-fichas ou o total mudarem, a numeração é recalculada; baixe os PDFs de novo antes de imprimir.</p>
+        </div>
       )}
 
       {podeEscrever && (

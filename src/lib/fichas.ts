@@ -66,3 +66,23 @@ export function distribuirFichas(total: number, entradas: NucleoEntrada[]): Dist
   }));
   return { linhas, fixos, restante, somaPre, erro };
 }
+
+export type Faixa = { chave: string; nome: string; qtd: number; de: number; ate: number; reserva: boolean };
+
+/**
+ * Numeração contínua das fichas: núcleos em ordem alfabética, depois a cortesia, e a reserva por último.
+ * Quem fica com 0 fichas não recebe faixa.
+ */
+export function faixasFichas(linhas: LinhaFichas[], reserva: number, inicio: number): Faixa[] {
+  const ordem = [...linhas]
+    .filter((l) => l.fichas > 0)
+    .sort((a, b) => Number(a.modo === 'cortesia') - Number(b.modo === 'cortesia') || a.nome.localeCompare(b.nome, 'pt-BR'));
+  const itens = ordem.map((l) => ({ chave: l.id, nome: l.nome, qtd: l.fichas, reserva: false }));
+  if (reserva > 0) itens.push({ chave: 'reserva', nome: 'Reserva (emergência e padres)', qtd: reserva, reserva: true });
+  let prox = inicio;
+  return itens.map((i) => {
+    const f = { ...i, de: prox, ate: prox + i.qtd - 1 };
+    prox += i.qtd;
+    return f;
+  });
+}

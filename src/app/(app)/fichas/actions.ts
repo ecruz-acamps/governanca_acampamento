@@ -3,7 +3,8 @@
 import { redirect } from 'next/navigation';
 import { tentar, voltar } from '@/lib/acao';
 import { run } from '@/lib/db';
-import { inteiroOuNulo, isUuid, nz, uuidOuNulo } from '@/lib/form';
+import { dataOuNulo, inteiroOuNulo, isUuid, nz, uuidOuNulo } from '@/lib/form';
+import { lerValor } from '@/lib/format';
 import { requirePerm } from '@/lib/session';
 
 const R = '/fichas';
@@ -94,4 +95,34 @@ export async function alternarNucleo(formData: FormData) {
     await tx`update gov.nucleo set ativo = not ativo where id = ${id}`;
   }));
   voltar(aqui(d), 'Situação do núcleo alterada.', erro);
+}
+
+/** Dados que entram impressos nas fichas de inscrição (PDF). */
+export async function salvarDadosFichas(formData: FormData) {
+  const u = await requirePerm('fichas:escrever');
+  const id = nz(formData.get('id'));
+  if (!isUuid(id)) redirect(R);
+  const numero = nz(formData.get('missao_numero'));
+  const saida = dataOuNulo(formData.get('saida'));
+  const fim = dataOuNulo(formData.get('encerramento'));
+  const txtValor = nz(formData.get('valor'));
+  const valor = lerValor(txtValor);
+  const pix = nz(formData.get('pix'));
+  const contato = nz(formData.get('contato'));
+  const inicio = inteiroOuNulo(formData.get('inicio')) ?? 1;
+  if (!numero || !/^\d{1,3}$/.test(numero)) voltar(aqui(id), '', 'Informe o número da missão (ex.: 23).');
+  if (!saida || !fim) voltar(aqui(id), '', 'Informe a data de saída e a de encerramento.');
+  if (fim < saida) voltar(aqui(id), '', 'O encerramento não pode ser antes da saída.');
+  if (valor === null || valor <= 0 || valor >= 100000) voltar(aqui(id), '', 'Informe o valor da inscrição.');
+  if (!pix || !contato) voltar(aqui(id), '', 'Informe a chave PIX e o contato do financeiro.');
+  if (pix.length > 120 || contato.length > 120) voltar(aqui(id), '', 'PIX ou contato muito longo.');
+  if (inicio < 1) voltar(aqui(id), '', 'O número inicial deve ser 1 ou mais.');
+  const erro = await tentar(() => run(u.id, async (tx) => {
+    await tx`
+      update gov.distribuicao_fichas
+         set ficha_missao_numero = ${numero}, ficha_saida = ${saida}, ficha_encerramento = ${fim},
+             ficha_valor = ${valor}, ficha_pix = ${pix}, ficha_contato = ${contato}, ficha_inicio = ${inicio}
+       where id = ${id}`;
+  }));
+  voltar(aqui(id), 'Dados das fichas salvos. Já dá para baixar os PDFs.', erro);
 }
