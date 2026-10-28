@@ -19,3 +19,5 @@ A migração 010 permite coordenador e auxiliares de missão que não são assoc
 A migração 011 cria a divisão de fichas por núcleo (núcleos, distribuições e pré-fichas). Aplique a 010 e a 011 ANTES de publicar o código.
 
 A migração 012 cadastra os 13 núcleos e a separação dentro/fora da Arquidiocese (Anitápolis e Garopaba). Aplique 010, 011 e 012 ANTES de publicar o código.
+
+A migração 013 liga a divisão de fichas a uma missão. Aplique 010, 011, 012 e 013 ANTES de publicar o código.

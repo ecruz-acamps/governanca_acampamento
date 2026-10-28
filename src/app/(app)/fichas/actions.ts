@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { tentar, voltar } from '@/lib/acao';
 import { run } from '@/lib/db';
-import { inteiroOuNulo, isUuid, nz } from '@/lib/form';
+import { inteiroOuNulo, isUuid, nz, uuidOuNulo } from '@/lib/form';
 import { requirePerm } from '@/lib/session';
 
 const R = '/fichas';
@@ -15,13 +15,14 @@ export async function criarDistribuicao(formData: FormData) {
   const ano = inteiroOuNulo(formData.get('ano'));
   const total = inteiroOuNulo(formData.get('total'));
   const reserva = inteiroOuNulo(formData.get('reserva')) ?? 0;
+  const missao = uuidOuNulo(formData.get('missao_id'));
   if (!titulo) voltar(R, '', 'Informe o título (ex.: Acampamento 2027).');
   if (!ano) voltar(R, '', 'Informe o ano.');
   if (total === null) voltar(R, '', 'Informe o total de fichas.');
   let novo: string | null = null;
   const erro = await tentar(() => run(u.id, async (tx) => {
     const [r] = await tx<{ id: string }[]>`
-      insert into gov.distribuicao_fichas (titulo, ano, total_fichas, reserva_fichas) values (${titulo}, ${ano}, ${total}, ${reserva}) returning id`;
+      insert into gov.distribuicao_fichas (titulo, ano, total_fichas, reserva_fichas, missao_id) values (${titulo}, ${ano}, ${total}, ${reserva}, ${missao}) returning id`;
     novo = r.id;
   }));
   if (erro || !novo) voltar(R, '', erro);

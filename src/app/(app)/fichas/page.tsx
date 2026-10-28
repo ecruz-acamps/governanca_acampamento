@@ -7,22 +7,28 @@ import { can } from '@/lib/perms';
 import { requirePerm } from '@/lib/session';
 import { alternarNucleo, criarDistribuicao, criarNucleo, excluirDistribuicao, salvarDistribuicao, salvarNucleo } from './actions';
 
-type Dist = { id: string; titulo: string; ano: number; total_fichas: number; reserva_fichas: number };
+type Dist = { id: string; titulo: string; ano: number; total_fichas: number; reserva_fichas: number; missao: string | null };
 type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; ativo: boolean; pre_fichas: number; pre_fora: number; separa_origem: boolean };
 
 export default async function FichasPage({ searchParams }: { searchParams: SP & { d?: string } }) {
   const u = await requirePerm('fichas:ler');
   const podeEscrever = can(u.papel, 'fichas:escrever');
 
-  const { dists, sel, nucleos } = await run(u.id, async (tx) => {
-    const dists = await tx<Dist[]>`select id, titulo, ano, total_fichas, reserva_fichas from gov.distribuicao_fichas order by ano desc, criado_em desc`;
+  const { dists, sel, nucleos, missoes } = await run(u.id, async (tx) => {
+    const dists = await tx<Dist[]>`select d.id, d.titulo, d.ano, d.total_fichas, d.reserva_fichas, m.nome as missao
+        from gov.distribuicao_fichas d left join gov.missao m on m.id = d.missao_id
+       order by d.ano desc, d.criado_em desc`;
     const sel = dists.find((d) => d.id === searchParams.d) ?? dists[0] ?? null;
     const nucleos = await tx<Nuc[]>`
       select n.id, n.nome, n.tipo, n.fichas_fixas, n.ativo, n.separa_origem, coalesce(p.pre_fichas, 0) as pre_fichas, coalesce(p.pre_fora, 0) as pre_fora
         from gov.nucleo n
         left join gov.distribuicao_pre p on p.nucleo_id = n.id and p.distribuicao_id = ${sel?.id && isUuid(sel.id) ? sel.id : null}
        order by n.ativo desc, n.tipo, n.nome`;
-    return { dists, sel, nucleos };
+    const missoes = await tx<{ id: string; nome: string }[]>`
+      select id, nome from gov.missao
+       where status <> 'cancelada' and id not in (select missao_id from gov.distribuicao_fichas where missao_id is not null)
+       order by coalesce(data_inicio, criado_em::date) desc`;
+    return { dists, sel, nucleos, missoes };
   });
 
   const ativos = nucleos.filter((n) => n.ativo);
@@ -50,7 +56,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
 
       {sel && calc && (
         <form action={salvarDistribuicao} className="card tabela">
-          <h2>{sel.titulo} · {sel.ano}</h2>
+          <h2>{sel.titulo} · {sel.ano}{sel.missao ? ` · missão: ${sel.missao}` : ''}</h2>
           <input type="hidden" name="id" value={sel.id} />
           <div className="grid g4" style={{ marginBottom: 14 }}>
             <div className="kpi"><b>{sel.total_fichas}</b><span>Fichas para os núcleos</span></div>
@@ -108,7 +114,8 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
           </fieldset>
           <p className="muted" style={{ marginTop: 10 }}>
             Regra: as fichas fixas e a cortesia saem primeiro; o restante é dividido entre os demais núcleos na proporção das
-            pré-fichas, arredondando pelo maior resto para a soma fechar no total.
+            pré-fichas, arredondando pelo maior resto para a soma fechar no total. Ao aumentar o total, as fichas a mais vão só
+            para os núcleos proporcionais; Anitápolis e a cortesia não mudam.
           </p>
         </form>
       )}
@@ -118,6 +125,12 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
           <h2>Nova distribuição</h2>
           <div className="form-grid">
             <Campo label="Título"><input type="text" name="titulo" placeholder="Acampamento 2027" required /></Campo>
+            <Campo label="Missão" dica="o total de fichas é definido por missão">
+              <select name="missao_id" defaultValue="">
+                <option value="">— sem missão —</option>
+                {missoes.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
+              </select>
+            </Campo>
             <Campo label="Ano"><input type="number" name="ano" min={2000} max={2100} defaultValue={new Date().getFullYear() + 1} required /></Campo>
             <Campo label="Fichas para os núcleos"><input type="number" name="total" min={0} defaultValue={120} required /></Campo>
             <Campo label="Reserva (emergência e padres)"><input type="number" name="reserva" min={0} defaultValue={8} required /></Campo>
