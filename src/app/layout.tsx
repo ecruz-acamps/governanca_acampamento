@@ -6,7 +6,16 @@ export const metadata: Metadata = {
   title: 'Governança — Associação dos Campistas São Padre Pio',
   robots: { index: false, follow: false },
   applicationName: 'Governança',
-  icons: { icon: '/icons/icon-192.png', apple: '/icons/apple-touch-icon.png' },
+  // ?v=2 força o navegador a trocar o ícone antigo que ficou guardado
+  icons: {
+    icon: [
+      { url: '/icons/favicon-32.png?v=2', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-48.png?v=2', sizes: '48x48', type: 'image/png' },
+      { url: '/icons/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico?v=2',
+    apple: '/icons/apple-touch-icon.png?v=2',
+  },
   appleWebApp: { capable: true, title: 'Governança', statusBarStyle: 'default' },
 };
 
