@@ -42,4 +42,4 @@ export function Campo({
   );
 }
 
-export type SP = { ok?: string; erro?: string };
+export type SP = { ok?: string; erro?: string; area?: string };

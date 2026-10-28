@@ -69,3 +69,14 @@ export async function requireAssociado(): Promise<Usuario & { associadoId: strin
   if (!u.associadoId) redirect('/?erro=' + encodeURIComponent('Sua conta não está ligada a um associado.'));
   return u as Usuario & { associadoId: string };
 }
+
+/**
+ * Área de patrimônio a que o usuário fica restrito.
+ * null = vê todas (superadmin, presidente, admin e demais da equipe);
+ * coordenador de patrimônio fica na própria área, ou em '__nenhuma__' se não tiver área definida.
+ */
+export function escopoPatrimonio(u: Usuario): string | null {
+  if (u.superadmin || u.papel !== 'coord_patrimonio') return null;
+  const a = u.areaPatrimonio?.trim().toLowerCase();
+  return a ? a : '__nenhuma__';
+}

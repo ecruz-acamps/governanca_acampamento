@@ -202,3 +202,19 @@ export const MISSAO_STATUS: Record<string, { rotulo: string; tom: string }> = {
   concluida: { rotulo: 'Concluída', tom: 'ok' },
   cancelada: { rotulo: 'Cancelada', tom: 'bad' },
 };
+
+/** Áreas de patrimônio (cada coordenador de patrimônio cuida de uma). */
+export const AREAS_PATRIMONIO: Record<string, string> = {
+  manutencao: 'Manutenção',
+  cozinha: 'Cozinha',
+  capela: 'Capela',
+  musica: 'Música',
+  teatro: 'Teatro',
+  animacao: 'Animação',
+  farmacia: 'Farmácia',
+  loja: 'Loja',
+  comunicacao: 'Comunicação',
+  obras: 'Obras',
+  secretaria: 'Secretaria',
+  tropa_de_elite: 'Tropa de Elite',
+};

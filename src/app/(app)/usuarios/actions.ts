@@ -3,6 +3,7 @@
 import { tentar, voltar } from '@/lib/acao';
 import { run } from '@/lib/db';
 import { isUuid, nz, uuidOuNulo } from '@/lib/form';
+import { AREAS_PATRIMONIO } from '@/lib/format';
 import { hashSenha, validarSenha, verificarSenha } from '@/lib/password';
 import { PAPEIS, type Papel } from '@/lib/perms';
 import { requirePerm, requireSuperadmin } from '@/lib/session';
@@ -113,6 +114,7 @@ export async function definirAreaPatrimonio(formData: FormData) {
   const id = nz(formData.get('id'));
   if (!isUuid(id)) voltar('/usuarios', '', 'Usuário inválido.');
   const area = nz(formData.get('area'))?.toLowerCase() ?? null;
+  if (area && !(area in AREAS_PATRIMONIO)) voltar('/usuarios', '', 'Área de patrimônio inválida.');
   const erro = await tentar(async () => {
     await run(u.id, (tx) => tx`update gov.usuario set area_patrimonio = ${area} where id = ${id}`);
   });

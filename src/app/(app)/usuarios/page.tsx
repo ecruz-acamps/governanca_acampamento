@@ -1,6 +1,6 @@
 import { Campo, Chip, Flash, PageHead, type SP } from '@/components/ui';
 import { run } from '@/lib/db';
-import { fmtDataHora } from '@/lib/format';
+import { AREAS_PATRIMONIO, fmtDataHora } from '@/lib/format';
 import { PAPEIS, PAPEL_LABEL } from '@/lib/perms';
 import { requirePerm } from '@/lib/session';
 import { alternarAtivo, criarUsuario, desbloquear, definirAreaPatrimonio, excluirUsuario, redefinirSenha, reiniciarSistema } from './actions';
@@ -31,7 +31,6 @@ export default async function UsuariosPage({ searchParams }: { searchParams: SP 
       <PageHead titulo="Usuários" sub="Quem pode entrar no sistema e com qual papel. As senhas são guardadas apenas como hash." />
       <Flash ok={searchParams.ok} erro={searchParams.erro} />
 
-      <datalist id="areas-patrimonio"><option value="secretaria" /></datalist>
       <form action={criarUsuario} className="card">
         <h2>Novo usuário</h2>
         <div className="form-grid">
@@ -68,7 +67,10 @@ export default async function UsuariosPage({ searchParams }: { searchParams: SP 
                   {x.papel === 'coord_patrimonio' && (
                     <form action={definirAreaPatrimonio} className="acoes" style={{ marginTop: 6 }}>
                       <input type="hidden" name="id" value={x.id} />
-                      <input type="text" name="area" list="areas-patrimonio" defaultValue={x.area_patrimonio ?? ''} placeholder="Patrimônio de…" style={{ width: 150 }} />
+                      <select name="area" defaultValue={x.area_patrimonio ?? ''} style={{ width: 170 }}>
+                        <option value="">Sem área (não vê bens)</option>
+                        {Object.entries(AREAS_PATRIMONIO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select>
                       <button className="btn sec mini" type="submit">Salvar</button>
                     </form>
                   )}

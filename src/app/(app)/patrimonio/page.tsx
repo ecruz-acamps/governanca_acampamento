@@ -1,23 +1,29 @@
 import { Campo, Chip, Flash, PageHead, type SP } from '@/components/ui';
 import { run } from '@/lib/db';
-import { fmtData, fmtMoeda, hoje, ORIGEM_LABEL } from '@/lib/format';
+import { AREAS_PATRIMONIO, fmtData, fmtMoeda, hoje, ORIGEM_LABEL } from '@/lib/format';
 import { can } from '@/lib/perms';
-import { requirePerm } from '@/lib/session';
-import { baixarBem, criarBem } from './actions';
+import { escopoPatrimonio, requirePerm } from '@/lib/session';
+import { baixarBem, criarBem, definirAreaBem } from './actions';
 
 type B = {
   id: string; numero_tombo: string | null; descricao: string; categoria: string | null; data_aquisicao: string | null;
-  valor: string | null; local: string | null; responsavel: string | null; situacao: string; baixa_em: string | null; inalienavel: boolean;
+  area: string | null; valor: string | null; local: string | null; responsavel: string | null; situacao: string; baixa_em: string | null; inalienavel: boolean;
 };
 
 export default async function PatrimonioPage({ searchParams }: { searchParams: SP }) {
   const u = await requirePerm('patrimonio:ler');
-  const pode = can(u.papel, 'patrimonio:escrever');
+  const escopo = escopoPatrimonio(u);
+  const semArea = escopo === '__nenhuma__';
+  const pode = can(u.papel, 'patrimonio:escrever') && !semArea;
+  const veTodas = escopo === null;
+  const filtro = veTodas && searchParams.area && searchParams.area in AREAS_PATRIMONIO ? searchParams.area : null;
+  const efetivo = escopo ?? filtro;
   const { bens, assoc, convenios, delibs } = await run(u.id, async (tx) => {
     const bens = await tx<B[]>`
-      select p.id, p.numero_tombo, p.descricao, p.categoria, p.data_aquisicao, p.valor::text, p.local, a.nome as responsavel,
+      select p.id, p.area, p.numero_tombo, p.descricao, p.categoria, p.data_aquisicao, p.valor::text, p.local, a.nome as responsavel,
              p.situacao, p.baixa_em, p.inalienavel
         from gov.patrimonio p left join gov.associado a on a.id = p.responsavel_id
+       where (${efetivo}::text is null or p.area = ${efetivo})
        order by p.situacao, p.numero_tombo nulls last, p.descricao
     `;
     const assoc = await tx<{ id: string; nome: string }[]>`select id, nome from gov.associado where status in ('associado','suspenso') order by nome`;
@@ -34,7 +40,8 @@ export default async function PatrimonioPage({ searchParams }: { searchParams: S
 
   return (
     <>
-      <PageHead titulo="Patrimônio" sub="Inventário dos bens permanentes. Bens são inalienáveis; a baixa exige assembleia e parecer do Conselho Fiscal (Art. 5, parágrafo único; Art. 12, I; Art. 22, d)" />
+      <PageHead titulo="Patrimônio" sub={(escopo && !semArea ? `Área: ${AREAS_PATRIMONIO[escopo] ?? escopo}. Você vê e cadastra só os bens da sua área. ` : '') + "Inventário dos bens permanentes. Bens são inalienáveis; a baixa exige assembleia e parecer do Conselho Fiscal (Art. 5, parágrafo único; Art. 12, I; Art. 22, d)"} />
+      {semArea && <p className="vazio">Seu usuário ainda não tem uma área de patrimônio definida. Peça ao administrador para escolher a sua área em Usuários.</p>}
       <Flash ok={searchParams.ok} erro={searchParams.erro} />
 
       <div className="grid g4" style={{ marginBottom: 18 }}>
@@ -48,6 +55,14 @@ export default async function PatrimonioPage({ searchParams }: { searchParams: S
           <h2>Cadastrar bem</h2>
           <div className="form-grid">
             <Campo label="Descrição" className="larga"><input type="text" name="descricao" required /></Campo>
+            {veTodas && (
+              <Campo label="Área">
+                <select name="area" required defaultValue={filtro ?? ''}>
+                  <option value="" disabled>Escolha…</option>
+                  {Object.entries(AREAS_PATRIMONIO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </Campo>
+            )}
             <Campo label="Nº de tombo"><input type="text" name="numero_tombo" /></Campo>
             <Campo label="Categoria"><input type="text" name="categoria" /></Campo>
             <Campo label="Data de aquisição"><input type="date" name="data_aquisicao" /></Campo>
@@ -76,15 +91,38 @@ export default async function PatrimonioPage({ searchParams }: { searchParams: S
         </form>
       )}
 
+      {veTodas && (
+        <div className="card">
+          <h2>Filtrar por área</h2>
+          <div className="acoes">
+            <a className={`btn mini ${filtro ? 'sec' : ''}`} href="/patrimonio">Todas</a>
+            {Object.entries(AREAS_PATRIMONIO).map(([k, v]) => <a key={k} className={`btn mini ${filtro === k ? '' : 'sec'}`} href={`/patrimonio?area=${k}`}>{v}</a>)}
+          </div>
+        </div>
+      )}
+
       <div className="card tabela">
         <h2>Inventário</h2>
         {bens.length === 0 ? <p className="vazio">Nenhum bem cadastrado.</p> : (
           <table>
-            <thead><tr><th>Tombo</th><th>Bem</th><th>Local / responsável</th><th>Valor</th><th>Situação</th></tr></thead>
+            <thead><tr><th>Tombo</th><th>Área</th><th>Bem</th><th>Local / responsável</th><th>Valor</th><th>Situação</th></tr></thead>
             <tbody>
               {bens.map((b) => (
                 <tr key={b.id}>
                   <td>{b.numero_tombo ?? '—'}</td>
+                  <td>
+                    {b.area ? AREAS_PATRIMONIO[b.area] ?? b.area : <Chip tom="warn">sem área</Chip>}
+                    {pode && veTodas && (
+                      <form action={definirAreaBem} className="acoes" style={{ marginTop: 6 }}>
+                        <input type="hidden" name="id" value={b.id} />
+                        <select name="area" defaultValue={b.area ?? ''} style={{ width: 130 }}>
+                          <option value="" disabled>Área…</option>
+                          {Object.entries(AREAS_PATRIMONIO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        </select>
+                        <button className="btn sec mini" type="submit">Salvar</button>
+                      </form>
+                    )}
+                  </td>
                   <td>{b.descricao}<div className="muted">{b.categoria}{b.data_aquisicao && ` · adquirido em ${fmtData(b.data_aquisicao)}`}</div></td>
                   <td>{b.local ?? '—'}<div className="muted">{b.responsavel}</div></td>
                   <td>{b.valor ? fmtMoeda(b.valor) : '—'}</td>
