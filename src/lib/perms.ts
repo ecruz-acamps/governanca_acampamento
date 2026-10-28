@@ -69,9 +69,9 @@ const PERMS = {
   'eleicoes:escrever': ['admin', 'presidente', 'secretario'],
   'conselho:ler': EQUIPE,
   'conselho:escrever': ['admin', 'presidente', 'vice_presidente', 'secretario', 'coord_eclesiastico'],
-  // Fichas: só presidente, secretário, tesoureiro e o superadmin (que passa por qualquer permissão)
-  'fichas:ler': ['presidente', 'secretario', 'tesoureiro'],
-  'fichas:escrever': ['presidente', 'secretario'],
+  // Fichas: presidente, secretário, tesoureiro, coord. de patrimônio e o superadmin (que passa por qualquer permissão)
+  'fichas:ler': ['presidente', 'secretario', 'tesoureiro', 'coord_patrimonio'],
+  'fichas:escrever': ['presidente', 'secretario', 'tesoureiro', 'coord_patrimonio'],
   'usuarios:gerir': ['admin'],
   'auditoria:ler': ['admin'],
 } as const satisfies Record<string, readonly Papel[]>;
