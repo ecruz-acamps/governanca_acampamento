@@ -7,7 +7,7 @@ import { run } from '@/lib/db';
 export async function guardaDoc(perm: Perm, id: string): Promise<{ u: Usuario } | { erro: Response }> {
   const u = await getUsuario();
   if (!u || u.precisaTrocar) return { erro: new Response('Não autenticado', { status: 401 }) };
-  if (!can(u.papel, perm, u.superadmin)) return { erro: new Response('Sem permissão', { status: 403 }) };
+  if (!can(u.papel, perm, u.superadmin, u.areaPatrimonio)) return { erro: new Response('Sem permissão', { status: 403 }) };
   if (!isUuid(id)) return { erro: new Response('Documento não encontrado', { status: 404 }) };
   return { u };
 }

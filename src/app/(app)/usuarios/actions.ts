@@ -106,3 +106,15 @@ export async function reiniciarSistema(formData: FormData) {
   });
   voltar('/usuarios', 'Sistema reiniciado. Só a conta do superadmin foi mantida.', erro);
 }
+
+/** Área de patrimônio do coordenador (ex.: "secretaria"). Só a da secretaria acessa as fichas. */
+export async function definirAreaPatrimonio(formData: FormData) {
+  const u = await requirePerm('usuarios:gerir');
+  const id = nz(formData.get('id'));
+  if (!isUuid(id)) voltar('/usuarios', '', 'Usuário inválido.');
+  const area = nz(formData.get('area'))?.toLowerCase() ?? null;
+  const erro = await tentar(async () => {
+    await run(u.id, (tx) => tx`update gov.usuario set area_patrimonio = ${area} where id = ${id}`);
+  });
+  voltar('/usuarios', 'Área de patrimônio atualizada.', erro);
+}

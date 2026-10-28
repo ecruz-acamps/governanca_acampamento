@@ -69,17 +69,25 @@ const PERMS = {
   'eleicoes:escrever': ['admin', 'presidente', 'secretario'],
   'conselho:ler': EQUIPE,
   'conselho:escrever': ['admin', 'presidente', 'vice_presidente', 'secretario', 'coord_eclesiastico'],
-  // Fichas: presidente, secretário, tesoureiro, coord. de patrimônio e o superadmin (que passa por qualquer permissão)
-  'fichas:ler': ['presidente', 'secretario', 'tesoureiro', 'coord_patrimonio'],
-  'fichas:escrever': ['presidente', 'secretario', 'tesoureiro', 'coord_patrimonio'],
+  // Fichas: presidente, secretário, tesoureiro, coord. do patrimônio da secretaria (ver CONDICIONAL) e o superadmin (que passa por qualquer permissão)
+  'fichas:ler': ['presidente', 'secretario', 'tesoureiro'],
+  'fichas:escrever': ['presidente', 'secretario', 'tesoureiro'],
   'usuarios:gerir': ['admin'],
   'auditoria:ler': ['admin'],
 } as const satisfies Record<string, readonly Papel[]>;
 
 export type Perm = keyof typeof PERMS;
 
-/** O superadmin pode tudo; os demais, conforme o papel. */
-export function can(papel: Papel, perm: Perm, superadmin = false): boolean {
+/** Permissões que um papel só tem quando a área de patrimônio do usuário bate (haverá vários patrimônios). */
+const CONDICIONAL: Partial<Record<Perm, { papel: Papel; area: string }>> = {
+  'fichas:ler': { papel: 'coord_patrimonio', area: 'secretaria' },
+  'fichas:escrever': { papel: 'coord_patrimonio', area: 'secretaria' },
+};
+
+/** O superadmin pode tudo; os demais, conforme o papel (e, em alguns casos, a área de patrimônio). */
+export function can(papel: Papel, perm: Perm, superadmin = false, areaPatrimonio: string | null = null): boolean {
   if (superadmin) return true;
-  return (PERMS[perm] as readonly Papel[]).includes(papel);
+  if ((PERMS[perm] as readonly Papel[]).includes(papel)) return true;
+  const c = CONDICIONAL[perm];
+  return !!c && c.papel === papel && areaPatrimonio?.trim().toLowerCase() === c.area;
 }

@@ -3,11 +3,11 @@ import { run } from '@/lib/db';
 import { fmtDataHora } from '@/lib/format';
 import { PAPEIS, PAPEL_LABEL } from '@/lib/perms';
 import { requirePerm } from '@/lib/session';
-import { alternarAtivo, criarUsuario, desbloquear, excluirUsuario, redefinirSenha, reiniciarSistema } from './actions';
+import { alternarAtivo, criarUsuario, desbloquear, definirAreaPatrimonio, excluirUsuario, redefinirSenha, reiniciarSistema } from './actions';
 
 type Lin = {
   id: string; email: string; nome: string; papel: string; ativo: boolean; ultimo_acesso: string | null;
-  tem_senha: boolean; precisa_trocar_senha: boolean; bloqueado: boolean; superadmin: boolean;
+  tem_senha: boolean; precisa_trocar_senha: boolean; bloqueado: boolean; superadmin: boolean; area_patrimonio: string | null;
 };
 
 export default async function UsuariosPage({ searchParams }: { searchParams: SP }) {
@@ -15,7 +15,7 @@ export default async function UsuariosPage({ searchParams }: { searchParams: SP 
   const { usuarios, associados } = await run(u.id, async (tx) => {
     const usuarios = await tx<Lin[]>`
       select id, email, nome, papel::text, ativo, ultimo_acesso, (senha_hash is not null) as tem_senha,
-             precisa_trocar_senha, (bloqueado_ate is not null and bloqueado_ate > now()) as bloqueado, superadmin
+             precisa_trocar_senha, (bloqueado_ate is not null and bloqueado_ate > now()) as bloqueado, superadmin, area_patrimonio
         from gov.usuario order by nome
     `;
     const associados = await tx<{ id: string; nome: string }[]>`
@@ -31,6 +31,7 @@ export default async function UsuariosPage({ searchParams }: { searchParams: SP 
       <PageHead titulo="Usuários" sub="Quem pode entrar no sistema e com qual papel. As senhas são guardadas apenas como hash." />
       <Flash ok={searchParams.ok} erro={searchParams.erro} />
 
+      <datalist id="areas-patrimonio"><option value="secretaria" /></datalist>
       <form action={criarUsuario} className="card">
         <h2>Novo usuário</h2>
         <div className="form-grid">
@@ -62,7 +63,16 @@ export default async function UsuariosPage({ searchParams }: { searchParams: SP 
             {usuarios.map((x) => (
               <tr key={x.id}>
                 <td>{x.nome}<div className="muted">{x.email}</div></td>
-                <td>{PAPEL_LABEL[x.papel as keyof typeof PAPEL_LABEL]}</td>
+                <td>
+                  {PAPEL_LABEL[x.papel as keyof typeof PAPEL_LABEL]}
+                  {x.papel === 'coord_patrimonio' && (
+                    <form action={definirAreaPatrimonio} className="acoes" style={{ marginTop: 6 }}>
+                      <input type="hidden" name="id" value={x.id} />
+                      <input type="text" name="area" list="areas-patrimonio" defaultValue={x.area_patrimonio ?? ''} placeholder="Patrimônio de…" style={{ width: 150 }} />
+                      <button className="btn sec mini" type="submit">Salvar</button>
+                    </form>
+                  )}
+                </td>
                 <td>
                   <div className="acoes">
                     {x.superadmin && <Chip tom="ok">superadmin</Chip>}

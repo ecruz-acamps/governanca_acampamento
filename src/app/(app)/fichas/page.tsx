@@ -12,7 +12,7 @@ type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas
 
 export default async function FichasPage({ searchParams }: { searchParams: SP & { d?: string } }) {
   const u = await requirePerm('fichas:ler');
-  const podeEscrever = can(u.papel, 'fichas:escrever', u.superadmin);
+  const podeEscrever = can(u.papel, 'fichas:escrever', u.superadmin, u.areaPatrimonio);
 
   const { dists, sel, nucleos, missoes } = await run(u.id, async (tx) => {
     const dists = await tx<Dist[]>`select d.id, d.titulo, d.ano, d.total_fichas, d.reserva_fichas, m.nome as missao
