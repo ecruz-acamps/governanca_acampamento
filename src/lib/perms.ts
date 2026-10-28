@@ -69,14 +69,17 @@ const PERMS = {
   'eleicoes:escrever': ['admin', 'presidente', 'secretario'],
   'conselho:ler': EQUIPE,
   'conselho:escrever': ['admin', 'presidente', 'vice_presidente', 'secretario', 'coord_eclesiastico'],
-  'fichas:ler': EQUIPE,
-  'fichas:escrever': ['admin', 'presidente', 'vice_presidente', 'secretario', 'coord_eclesiastico'],
+  // Fichas: só presidente, secretário, tesoureiro e o superadmin (que passa por qualquer permissão)
+  'fichas:ler': ['presidente', 'secretario', 'tesoureiro'],
+  'fichas:escrever': ['presidente', 'secretario'],
   'usuarios:gerir': ['admin'],
   'auditoria:ler': ['admin'],
 } as const satisfies Record<string, readonly Papel[]>;
 
 export type Perm = keyof typeof PERMS;
 
-export function can(papel: Papel, perm: Perm): boolean {
+/** O superadmin pode tudo; os demais, conforme o papel. */
+export function can(papel: Papel, perm: Perm, superadmin = false): boolean {
+  if (superadmin) return true;
   return (PERMS[perm] as readonly Papel[]).includes(papel);
 }

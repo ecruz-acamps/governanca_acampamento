@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (can(u.papel, 'mandatos:ler')) itens.push({ href: '/mandatos', label: 'Mandatos' });
   if (can(u.papel, 'assembleias:ler')) itens.push({ href: '/assembleias', label: 'Assembleias' });
   if (can(u.papel, 'conselho:ler')) itens.push({ href: '/conselho', label: 'Conselho Geral e missões' });
-  if (can(u.papel, 'fichas:ler')) itens.push({ href: '/fichas', label: 'Fichas por núcleo' });
+  if (can(u.papel, 'fichas:ler', u.superadmin)) itens.push({ href: '/fichas', label: 'Fichas por núcleo' });
   if (can(u.papel, 'eleicoes:ler')) itens.push({ href: '/eleicoes', label: 'Eleições' });
   if (can(u.papel, 'disciplinar:ler')) itens.push({ href: '/disciplinar', label: 'Disciplinar' });
   if (can(u.papel, 'financeiro:ler')) itens.push({ href: '/financeiro', label: 'Financeiro' });

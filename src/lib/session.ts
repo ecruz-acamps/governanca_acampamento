@@ -48,7 +48,7 @@ export async function requireUser(opcoes?: { permitirTroca?: boolean }): Promise
 
 export async function requirePerm(perm: Perm): Promise<Usuario> {
   const u = await requireUser();
-  if (!can(u.papel, perm)) {
+  if (!can(u.papel, perm, u.superadmin)) {
     redirect('/?erro=' + encodeURIComponent('Você não tem permissão para esta área.'));
   }
   return u;
