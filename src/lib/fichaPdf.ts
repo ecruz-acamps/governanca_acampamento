@@ -1,3 +1,4 @@
+import JSZip from "jszip";
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 
 // Gera as fichas a partir do PDF modelo (ficha-modelo.pdf): o modelo é mantido idêntico e só são trocados
@@ -221,9 +222,8 @@ function aplicarFicha(pages: PDFPage[], numero: number, opcoes: Opcoes, f: Fonte
 }
 
 /**
- * Gera UM PDF com as fichas dos números pedidos (4 páginas cada, em sequência).
- * O modelo é embutido uma só vez e reaproveitado, então o arquivo fica leve
- * (~1 MB + poucos KB por ficha) em vez de 1 MB por ficha.
+ * Gera um PDF com as fichas dos números pedidos (4 páginas cada, em sequência).
+ * O modelo (ficha-modelo.pdf) já vem com as fontes reduzidas aos glifos usados (~125 KB), então cada ficha pesa ~150 KB.
  */
 export async function gerarFichasPdf(modelo: Uint8Array, opcoes: Opcoes, numeros: number[]) {
   const doc = await PDFDocument.create();
@@ -245,6 +245,13 @@ export async function gerarFichasPdf(modelo: Uint8Array, opcoes: Opcoes, numeros
     aplicarFicha(pages, n, opcoes, fontes);
   }
   return doc.save();
+}
+
+/** ZIP com um PDF por ficha (ficha-001.pdf, ficha-002.pdf, ...). */
+export async function gerarZipFichas(modelo: Uint8Array, opcoes: Opcoes, numeros: number[]) {
+  const zip = new JSZip();
+  for (const n of numeros) zip.file(`ficha-${String(n).padStart(3, "0")}.pdf`, await gerarFichasPdf(modelo, opcoes, [n]));
+  return zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
 }
 
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Campo, Chip, Flash, PageHead, type SP } from '@/components/ui';
 import { run } from '@/lib/db';
-import { distribuirFichas, faixasFichas, type NucleoEntrada } from '@/lib/fichas';
+import { distribuirFichas, faixasFichas, partesDaFaixa, type NucleoEntrada } from '@/lib/fichas';
 import { isUuid } from '@/lib/form';
 import { can } from '@/lib/perms';
 import { requirePerm } from '@/lib/session';
@@ -133,7 +133,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
       {sel && calc && (
         <div className="card tabela">
           <h2>Fichas de inscrição em PDF</h2>
-          <p className="muted">Gera as fichas numeradas a partir do modelo. Cada núcleo recebe uma faixa contínua de números; a reserva fica no fim. Cada PDF traz as 4 páginas de cada ficha, pronto para imprimir.</p>
+          <p className="muted">Gera as fichas numeradas a partir do modelo. Cada núcleo recebe uma faixa contínua de números; a reserva fica no fim. Cada ficha é um arquivo PDF separado (ficha-001.pdf, ficha-002.pdf…), entregue num ZIP por núcleo; núcleos grandes saem em mais de um ZIP.</p>
           <form action={salvarDadosFichas}>
             <input type="hidden" name="id" value={sel.id} />
             <fieldset disabled={!podeEscrever}>
@@ -159,21 +159,24 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
                     <td>{f.nome}</td>
                     <td>{f.qtd}</td>
                     <td>{pad(f.de)} a {pad(f.ate)}</td>
-                    <td>{fichasProntas
-                      ? <a className="btn sec mini" href={`/api/documentos/fichas/${sel.id}?n=${f.chave}`} target="_blank" rel="noopener">Baixar</a>
-                      : <span className="muted">salve os dados acima</span>}</td>
+                    <td>{fichasProntas ? (
+                      <div className="acoes">
+                        {partesDaFaixa(f).map((x) => (
+                          <a key={x.parte} className="btn sec mini" href={`/api/documentos/fichas/${sel.id}?n=${f.chave}&p=${x.parte}`}>
+                            ZIP {partesDaFaixa(f).length > 1 ? `${pad(x.de)}–${pad(x.ate)}` : ''}
+                          </a>
+                        ))}
+                      </div>
+                    ) : <span className="muted">salve os dados acima</span>}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr>
-                  <td><b>Todas</b></td><td><b>{faixas.reduce((a, f) => a + f.qtd, 0)}</b></td><td>{pad(faixas[0].de)} a {pad(faixas[faixas.length - 1].ate)}</td>
-                  <td>{fichasProntas ? <a className="btn mini" href={`/api/documentos/fichas/${sel.id}`} target="_blank" rel="noopener">Baixar todas</a> : null}</td>
-                </tr>
+                <tr><td><b>Total</b></td><td><b>{faixas.reduce((a, f) => a + f.qtd, 0)}</b></td><td>{pad(faixas[0].de)} a {pad(faixas[faixas.length - 1].ate)}</td><td /></tr>
               </tfoot>
             </table>
           )}
-          <p className="muted" style={{ marginTop: 10 }}>Se as pré-fichas ou o total mudarem, a numeração é recalculada; baixe os PDFs de novo antes de imprimir.</p>
+          <p className="muted" style={{ marginTop: 10 }}>Se as pré-fichas ou o total mudarem, a numeração é recalculada; baixe os ZIPs de novo antes de enviar.</p>
         </div>
       )}
 

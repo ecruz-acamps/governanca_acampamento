@@ -189,3 +189,13 @@ export function respostaPdf(bytes: Uint8Array, nome: string): Response {
     },
   });
 }
+
+export function respostaZip(bytes: Uint8Array, nome: string): Response {
+  return new Response(bytes as unknown as BodyInit, {
+    headers: {
+      'content-type': 'application/zip',
+      'content-disposition': `attachment; filename="${nome.replace(/[^a-z0-9._-]/gi, '_')}"`,
+      'cache-control': 'private, no-store',
+    },
+  });
+}

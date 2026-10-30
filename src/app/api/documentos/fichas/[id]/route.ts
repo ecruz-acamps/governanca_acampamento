@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { guardaDoc } from '@/lib/docauth';
 import { run } from '@/lib/db';
-import { distribuirFichas, faixasFichas, type NucleoEntrada } from '@/lib/fichas';
-import { gerarFichasPdf, textoPeriodo, validarEntrada } from '@/lib/fichaPdf';
-import { respostaPdf } from '@/lib/pdf';
+import { distribuirFichas, faixasFichas, partesDaFaixa, type NucleoEntrada } from '@/lib/fichas';
+import { gerarZipFichas, textoPeriodo, validarEntrada } from '@/lib/fichaPdf';
+import { respostaZip } from '@/lib/pdf';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -14,11 +14,13 @@ type D = {
   ficha_encerramento: string | null; ficha_valor: string | null; ficha_pix: string | null; ficha_contato: string | null; ficha_inicio: number;
 };
 
-/** Fichas de inscrição em PDF. ?n=<id do núcleo> | reserva | todas (padrão). Mesmo acesso da tela de fichas. */
+/** ZIP com uma ficha de inscrição (PDF) por arquivo. ?n=<id do núcleo | reserva>&p=<parte, a partir de 0>. Mesmo acesso da tela de fichas. */
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const g = await guardaDoc('fichas:ler', params.id);
   if ('erro' in g) return g.erro;
-  const n = new URL(req.url).searchParams.get('n') ?? 'todas';
+  const q = new URL(req.url).searchParams;
+  const n = q.get('n') ?? '';
+  const p = Number(q.get('p') ?? 0);
 
   const r = await run(g.u.id, async (tx) => {
     const [d] = await tx<D[]>`
@@ -52,13 +54,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }));
   const calc = distribuirFichas(d.total_fichas, entradas);
   const faixas = faixasFichas(calc.linhas, d.reserva_fichas, d.ficha_inicio);
-  const escolhidas = n === 'todas' ? faixas : faixas.filter((f) => f.chave === n);
-  if (escolhidas.length === 0) return new Response('Núcleo sem fichas nesta distribuição', { status: 404 });
+  const faixa = faixas.find((f) => f.chave === n);
+  const parte = faixa ? partesDaFaixa(faixa)[Number.isInteger(p) ? p : -1] : undefined;
+  if (!faixa || !parte) return new Response('Núcleo sem fichas nesta distribuição', { status: 404 });
 
-  const numeros = escolhidas.flatMap((f) => Array.from({ length: f.qtd }, (_, i) => f.de + i));
+  const numeros = Array.from({ length: parte.ate - parte.de + 1 }, (_, i) => parte.de + i);
   const modelo = new Uint8Array(fs.readFileSync(path.join(process.cwd(), 'src/assets/ficha-modelo.pdf')));
-  const bytes = await gerarFichasPdf(modelo, opcoes, numeros);
+  const bytes = await gerarZipFichas(modelo, opcoes, numeros);
   const pad = (x: number) => String(x).padStart(3, '0');
-  const rotulo = n === 'todas' ? 'todas' : escolhidas[0].nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  return respostaPdf(bytes, `fichas-${rotulo}-${pad(numeros[0])}-a-${pad(numeros[numeros.length - 1])}.pdf`);
+  const rotulo = faixa.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return respostaZip(bytes, `fichas-${rotulo}-${pad(parte.de)}-a-${pad(parte.ate)}.zip`);
 }

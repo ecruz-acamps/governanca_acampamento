@@ -86,3 +86,13 @@ export function faixasFichas(linhas: LinhaFichas[], reserva: number, inicio: num
     return f;
   });
 }
+
+/** Máximo de fichas por ZIP (a Vercel limita a resposta a 4,5 MB; cada ficha pesa ~150 KB). */
+export const FICHAS_POR_ZIP = 20;
+
+/** Divide uma faixa em partes de até FICHAS_POR_ZIP fichas. */
+export function partesDaFaixa(f: Faixa): { parte: number; de: number; ate: number }[] {
+  const partes: { parte: number; de: number; ate: number }[] = [];
+  for (let de = f.de, i = 0; de <= f.ate; de += FICHAS_POR_ZIP, i++) partes.push({ parte: i, de, ate: Math.min(f.ate, de + FICHAS_POR_ZIP - 1) });
+  return partes;
+}
