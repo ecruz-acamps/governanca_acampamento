@@ -5,7 +5,7 @@ import { distribuirFichas, faixasFichas, partesDaFaixa, type NucleoEntrada } fro
 import { isUuid } from '@/lib/form';
 import { can } from '@/lib/perms';
 import { requirePerm } from '@/lib/session';
-import { alternarNucleo, criarDistribuicao, criarNucleo, excluirDistribuicao, salvarDadosFichas, salvarDistribuicao, salvarNucleo } from './actions';
+import { alternarNucleo, criarDistribuicao, criarNucleo, excluirDistribuicao, excluirNucleo, excluirTodosNucleos, salvarDadosFichas, salvarDistribuicao, salvarNucleo } from './actions';
 
 type Dist = { id: string; titulo: string; ano: number; total_fichas: number; reserva_fichas: number; missao: string | null;
   m_inicio: string | null; m_fim: string | null; ficha_missao_numero: string | null; ficha_saida: string | null; ficha_encerramento: string | null;
@@ -201,7 +201,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
 
       <div className="card tabela">
         <h2>Núcleos</h2>
-        <p className="muted">Deixe “fichas fixas” vazio para o núcleo entrar na divisão proporcional. Anitápolis tem 10 fixas (acordo com a prefeitura) e Alfredo Wagner recebe 2 de cortesia.</p>
+        <p className="muted">Deixe “fichas fixas” vazio para o núcleo entrar na divisão proporcional. Você pode excluir núcleos e cadastrar só os necessários.</p>
         <table>
           <thead><tr><th>Núcleo</th><th>Fichas fixas</th><th>Situação</th></tr></thead>
           <tbody>
@@ -226,18 +226,47 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
                         <button className="btn sec mini" type="submit">{n.ativo ? 'Desativar' : 'Reativar'}</button>
                       </form>
                     )}
+                    {podeEscrever && (
+                      <details>
+                        <summary className="muted">Excluir…</summary>
+                        <form action={excluirNucleo} style={{ marginTop: 6 }}>
+                          <input type="hidden" name="id" value={n.id} /><input type="hidden" name="d" value={sel?.id ?? ''} />
+                          <button className="btn perigo mini" type="submit">Confirmar exclusão</button>
+                        </form>
+                      </details>
+                    )}
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {nucleos.length === 0 && <p className="vazio">Nenhum núcleo cadastrado. Adicione abaixo só os que forem necessários.</p>}
         {podeEscrever && (
-          <form action={criarNucleo} className="acoes" style={{ marginTop: 14 }}>
+          <form action={criarNucleo} className="form-grid" style={{ marginTop: 14 }}>
             <input type="hidden" name="d" value={sel?.id ?? ''} />
-            <input type="text" name="nome" placeholder="Nome do novo núcleo" required style={{ maxWidth: 260 }} />
-            <button className="btn" type="submit">Adicionar núcleo</button>
+            <Campo label="Nome do núcleo"><input type="text" name="nome" required /></Campo>
+            <Campo label="Tipo">
+              <select name="tipo" defaultValue="nucleo">
+                <option value="nucleo">Núcleo</option>
+                <option value="cortesia">Cortesia (não é núcleo)</option>
+              </select>
+            </Campo>
+            <Campo label="Fichas fixas" dica="vazio = divisão proporcional; cortesia exige um número"><input type="number" name="fixas" min={0} /></Campo>
+            <label className="campo"><span>Separa dentro/fora da Arquidiocese</span><input type="checkbox" name="separa_origem" /></label>
+            <div><button className="btn" type="submit">Adicionar núcleo</button></div>
           </form>
+        )}
+        {podeEscrever && nucleos.length > 0 && (
+          <details style={{ marginTop: 18 }}>
+            <summary className="muted">Apagar todos os núcleos…</summary>
+            <form action={excluirTodosNucleos} className="acoes" style={{ marginTop: 8 }}>
+              <input type="hidden" name="d" value={sel?.id ?? ''} />
+              <input type="text" name="confirma" placeholder="Digite EXCLUIR" autoComplete="off" style={{ maxWidth: 180 }} required />
+              <button className="btn perigo mini" type="submit">Apagar todos os núcleos</button>
+            </form>
+            <p className="muted">Apaga todos os núcleos e as pré-fichas deles em todas as distribuições. Não dá para desfazer.</p>
+          </details>
         )}
       </div>
 

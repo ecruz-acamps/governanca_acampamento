@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { tentar, voltar } from '@/lib/acao';
 import { run } from '@/lib/db';
-import { dataOuNulo, inteiroOuNulo, isUuid, nz, uuidOuNulo } from '@/lib/form';
+import { dataOuNulo, flag, inteiroOuNulo, isUuid, nz, uuidOuNulo } from '@/lib/form';
 import { lerValor } from '@/lib/format';
 import { requirePerm } from '@/lib/session';
 
@@ -66,11 +66,40 @@ export async function criarNucleo(formData: FormData) {
   const u = await requirePerm('fichas:escrever');
   const nome = nz(formData.get('nome'));
   const d = nz(formData.get('d'));
+  const cortesia = formData.get('tipo') === 'cortesia';
+  const fixas = inteiroOuNulo(formData.get('fixas'));
+  const separa = flag(formData.get('separa_origem'));
   if (!nome) voltar(aqui(d), '', 'Informe o nome do núcleo.');
+  if (cortesia && fixas === null) voltar(aqui(d), '', 'Cortesia precisa de um número fixo de fichas.');
   const erro = await tentar(() => run(u.id, async (tx) => {
-    await tx`insert into gov.nucleo (nome) values (${nome})`;
+    await tx`insert into gov.nucleo (nome, tipo, fichas_fixas, separa_origem) values (${nome}, ${cortesia ? 'cortesia' : 'nucleo'}, ${fixas}, ${separa})`;
   }));
   voltar(aqui(d), 'Núcleo cadastrado.', erro);
+}
+
+/** Exclui o núcleo e as pré-fichas dele em todas as distribuições. */
+export async function excluirNucleo(formData: FormData) {
+  const u = await requirePerm('fichas:escrever');
+  const id = nz(formData.get('id'));
+  const d = nz(formData.get('d'));
+  if (!isUuid(id)) redirect(aqui(d));
+  const erro = await tentar(() => run(u.id, async (tx) => {
+    await tx`delete from gov.distribuicao_pre where nucleo_id = ${id}`;
+    await tx`delete from gov.nucleo where id = ${id}`;
+  }));
+  voltar(aqui(d), 'Núcleo excluído.', erro);
+}
+
+/** Apaga todos os núcleos (e as pré-fichas) para recadastrar só os necessários. Exige digitar EXCLUIR. */
+export async function excluirTodosNucleos(formData: FormData) {
+  const u = await requirePerm('fichas:escrever');
+  const d = nz(formData.get('d'));
+  if (nz(formData.get('confirma'))?.toUpperCase() !== 'EXCLUIR') voltar(aqui(d), '', 'Para apagar todos os núcleos, digite EXCLUIR na confirmação.');
+  const erro = await tentar(() => run(u.id, async (tx) => {
+    await tx`delete from gov.distribuicao_pre`;
+    await tx`delete from gov.nucleo`;
+  }));
+  voltar(aqui(d), 'Todos os núcleos foram excluídos. Cadastre os que forem necessários.', erro);
 }
 
 /** Fichas fixas: vazio = entra na divisão proporcional. */
