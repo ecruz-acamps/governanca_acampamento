@@ -3,13 +3,14 @@ export type NucleoEntrada = {
   nome: string;
   tipo: 'nucleo' | 'cortesia';
   fichasFixas: number | null;
+  fichasMinimas?: number | null; // piso: entra na divisão proporcional, mas nunca recebe menos que isso
   preFichas: number;
 };
 
 export type LinhaFichas = NucleoEntrada & {
   fichas: number;
   percentual: number | null; // % das pré-fichas dos núcleos proporcionais
-  modo: 'fixo' | 'cortesia' | 'proporcional';
+  modo: 'fixo' | 'cortesia' | 'proporcional' | 'minimo';
 };
 
 export type Distribuicao = {
@@ -23,6 +24,8 @@ export type Distribuicao = {
 /**
  * Fixos e cortesia saem primeiro; o restante é dividido pelas pré-fichas
  * (método do maior resto, para a soma fechar exatamente no total).
+ * Núcleo com mínimo: se a parte proporcional ficaria abaixo do mínimo, recebe o mínimo,
+ * sai da divisão e o resto é refeito para os demais (repete até ninguém ficar abaixo do piso).
  * Empate no resto: quem tem mais pré-fichas, depois ordem alfabética.
  */
 export function distribuirFichas(total: number, entradas: NucleoEntrada[]): Distribuicao {
@@ -32,37 +35,57 @@ export function distribuirFichas(total: number, entradas: NucleoEntrada[]): Dist
   const somaPre = prop.reduce((a, n) => a + n.preFichas, 0);
 
   const fichas = new Map<string, number>();
+  const porMinimo = new Set<string>();
   for (const n of entradas) if (n.fichasFixas !== null) fichas.set(n.id, n.fichasFixas);
 
   let erro: string | null = null;
   if (restante < 0) {
     erro = `As fichas fixas (${fixos}) são maiores que o total (${total}).`;
     for (const n of prop) fichas.set(n.id, 0);
-  } else if (somaPre === 0) {
-    for (const n of prop) fichas.set(n.id, 0);
-    if (prop.length && restante > 0) erro = 'Informe as pré-fichas dos núcleos para calcular a divisão.';
   } else {
-    const cotas = prop.map((n) => {
-      const exato = (restante * n.preFichas) / somaPre;
-      return { n, base: Math.floor(exato), resto: exato - Math.floor(exato) };
-    });
-    let sobra = restante - cotas.reduce((a, c) => a + c.base, 0);
-    const ordem = [...cotas].sort(
-      (x, y) => y.resto - x.resto || y.n.preFichas - x.n.preFichas || x.n.nome.localeCompare(y.n.nome, 'pt-BR'),
-    );
-    for (const c of ordem) {
-      if (sobra <= 0) break;
-      c.base += 1;
-      sobra -= 1;
+    let pool = [...prop];
+    let resto = restante;
+    for (;;) {
+      const soma = pool.reduce((a, n) => a + n.preFichas, 0);
+      const abaixo = pool.filter((n) => (n.fichasMinimas ?? 0) > 0 && (soma > 0 ? (resto * n.preFichas) / soma : 0) < (n.fichasMinimas ?? 0));
+      if (abaixo.length === 0) break;
+      for (const n of abaixo) {
+        fichas.set(n.id, n.fichasMinimas ?? 0);
+        porMinimo.add(n.id);
+        resto -= n.fichasMinimas ?? 0;
+      }
+      pool = pool.filter((n) => !porMinimo.has(n.id));
     }
-    for (const c of cotas) fichas.set(c.n.id, c.base);
+    const soma = pool.reduce((a, n) => a + n.preFichas, 0);
+    if (resto < 0) {
+      erro = `Os mínimos e as fichas fixas (${total - resto}) são maiores que o total (${total}).`;
+      for (const n of pool) fichas.set(n.id, 0);
+    } else if (soma === 0) {
+      for (const n of pool) fichas.set(n.id, 0);
+      if (pool.length && resto > 0) erro = 'Informe as pré-fichas dos núcleos para calcular a divisão.';
+    } else {
+      const cotas = pool.map((n) => {
+        const exato = (resto * n.preFichas) / soma;
+        return { n, base: Math.floor(exato), resto: exato - Math.floor(exato) };
+      });
+      let sobra = resto - cotas.reduce((a, c) => a + c.base, 0);
+      const ordem = [...cotas].sort(
+        (x, y) => y.resto - x.resto || y.n.preFichas - x.n.preFichas || x.n.nome.localeCompare(y.n.nome, 'pt-BR'),
+      );
+      for (const c of ordem) {
+        if (sobra <= 0) break;
+        c.base += 1;
+        sobra -= 1;
+      }
+      for (const c of cotas) fichas.set(c.n.id, c.base);
+    }
   }
 
   const linhas: LinhaFichas[] = entradas.map((n) => ({
     ...n,
     fichas: fichas.get(n.id) ?? 0,
-    percentual: n.fichasFixas === null && somaPre > 0 ? (n.preFichas / somaPre) * 100 : null,
-    modo: n.fichasFixas === null ? 'proporcional' : n.tipo === 'cortesia' ? 'cortesia' : 'fixo',
+    percentual: n.fichasFixas === null && !porMinimo.has(n.id) && somaPre > 0 ? (n.preFichas / somaPre) * 100 : null,
+    modo: n.fichasFixas === null ? (porMinimo.has(n.id) ? 'minimo' : 'proporcional') : n.tipo === 'cortesia' ? 'cortesia' : 'fixo',
   }));
   return { linhas, fixos, restante, somaPre, erro };
 }

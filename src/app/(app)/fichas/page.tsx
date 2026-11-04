@@ -12,7 +12,7 @@ type Dist = { id: string; titulo: string; ano: number; total_fichas: number; res
   m_inicio: string | null; m_fim: string | null; ficha_missao_numero: string | null; ficha_saida: string | null; ficha_encerramento: string | null;
   ficha_valor: string | null; ficha_pix: string | null; ficha_contato: string | null; ficha_inicio: number;
 };
-type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; ativo: boolean; pre_fichas: number; pre_fora: number; separa_origem: boolean };
+type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; fichas_minimas: number | null; ativo: boolean; pre_fichas: number; pre_fora: number; separa_origem: boolean };
 
 export default async function FichasPage({ searchParams }: { searchParams: SP & { d?: string } }) {
   const u = await requirePerm('fichas:ler');
@@ -26,7 +26,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
        order by d.ano desc, d.criado_em desc`;
     const sel = dists.find((d) => d.id === searchParams.d) ?? dists[0] ?? null;
     const nucleos = await tx<Nuc[]>`
-      select n.id, n.nome, n.tipo, n.fichas_fixas, n.ativo, n.separa_origem, coalesce(p.pre_fichas, 0) as pre_fichas, coalesce(p.pre_fora, 0) as pre_fora
+      select n.id, n.nome, n.tipo, n.fichas_fixas, n.fichas_minimas, n.ativo, n.separa_origem, coalesce(p.pre_fichas, 0) as pre_fichas, coalesce(p.pre_fora, 0) as pre_fora
         from gov.nucleo n
         left join gov.distribuicao_pre p on p.nucleo_id = n.id and p.distribuicao_id = ${sel?.id && isUuid(sel.id) ? sel.id : null}
        order by n.ativo desc, n.tipo, n.nome`;
@@ -40,7 +40,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
 
   const ativos = nucleos.filter((n) => n.ativo);
   const entradas: NucleoEntrada[] = ativos.map((n) => ({
-    id: n.id, nome: n.nome, tipo: n.tipo, fichasFixas: n.fichas_fixas, preFichas: preEfetivas(n.pre_fichas, n.pre_fora, n.separa_origem, peso),
+    id: n.id, nome: n.nome, tipo: n.tipo, fichasFixas: n.fichas_fixas, fichasMinimas: n.fichas_minimas, preFichas: preEfetivas(n.pre_fichas, n.pre_fora, n.separa_origem, peso),
   }));
   const calc = sel ? distribuirFichas(sel.total_fichas, entradas) : null;
   const porId = new Map(calc?.linhas.map((l) => [l.id, l]) ?? []);
@@ -79,7 +79,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
           {calc.erro && <p className="muted" role="alert" style={{ color: 'var(--bad-ink)' }}>{calc.erro}</p>}
           <fieldset disabled={!podeEscrever}>
             <div className="form-grid">
-              <Campo label="Fichas para os núcleos" dica="inclui as fixas de Anitápolis e a cortesia de Alfredo Wagner">
+              <Campo label="Fichas para os núcleos" dica="inclui o mínimo de Anitápolis e a cortesia de Alfredo Wagner">
                 <input type="number" name="total" min={0} defaultValue={sel.total_fichas} required />
               </Campo>
               <Campo label="Reserva (emergência e padres)" dica="fora da divisão">
@@ -97,7 +97,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
                       <td>
                         <input type="hidden" name="nucleo" value={n.id} />
                         {n.nome}{' '}
-                        {n.tipo === 'cortesia' ? <Chip tom="warn">cortesia (não é núcleo)</Chip> : fixo ? <Chip tom="warn">fixo</Chip> : null}
+                        {n.tipo === 'cortesia' ? <Chip tom="warn">cortesia (não é núcleo)</Chip> : fixo ? <Chip tom="warn">fixo</Chip> : n.fichas_minimas ? <Chip tom="warn">{l?.modo === 'minimo' ? `mínimo ${n.fichas_minimas} (aplicado)` : `mínimo ${n.fichas_minimas}`}</Chip> : null}
                       </td>
                       <td>
                         {n.separa_origem ? (
@@ -124,8 +124,8 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
           </fieldset>
           <p className="muted" style={{ marginTop: 10 }}>
             Regra: as fichas fixas e a cortesia saem primeiro; o restante é dividido entre os demais núcleos na proporção das
-            pré-fichas (as de fora da Arquidiocese valem o peso definido em Configurações; as de dentro valem 1), arredondando pelo maior resto para a soma fechar no total. Ao aumentar o total, as fichas a mais vão só
-            para os núcleos proporcionais; Anitápolis e a cortesia não mudam.
+            pré-fichas (as de fora da Arquidiocese valem o peso definido em Configurações; as de dentro valem 1), arredondando pelo maior resto para a soma fechar no total. Núcleo com mínimo nunca recebe menos que ele. Ao aumentar o total, as fichas a mais vão só
+            para os núcleos proporcionais; a cortesia não muda, e Anitápolis só passa de 10 se a proporção der mais.
           </p>
         </form>
       )}
@@ -202,9 +202,9 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
 
       <div className="card tabela">
         <h2>Núcleos</h2>
-        <p className="muted">Deixe “fichas fixas” vazio para o núcleo entrar na divisão proporcional. Você pode excluir núcleos e cadastrar só os necessários.</p>
+        <p className="muted">Deixe “fichas fixas” vazio para o núcleo entrar na divisão proporcional. “Mínimo” garante um piso: o núcleo recebe pelo menos esse número e mais se a proporção der mais (Anitápolis: mínimo 10). Você pode excluir núcleos e cadastrar só os necessários.</p>
         <table>
-          <thead><tr><th>Núcleo</th><th>Fichas fixas</th><th>Situação</th></tr></thead>
+          <thead><tr><th>Núcleo</th><th>Fichas fixas / mínimas</th><th>Situação</th></tr></thead>
           <tbody>
             {nucleos.map((n) => (
               <tr key={n.id}>
@@ -213,7 +213,8 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
                   {podeEscrever ? (
                     <form action={salvarNucleo} className="acoes">
                       <input type="hidden" name="id" value={n.id} /><input type="hidden" name="d" value={sel?.id ?? ''} />
-                      <input type="number" name="fixas" min={0} defaultValue={n.fichas_fixas ?? ''} placeholder="proporcional" style={{ maxWidth: 120 }} required={n.tipo === 'cortesia'} />
+                      <input type="number" name="fixas" min={0} defaultValue={n.fichas_fixas ?? ''} placeholder="fixas" title="Fichas fixas (vazio = proporcional)" style={{ maxWidth: 100 }} required={n.tipo === 'cortesia'} />
+                      <input type="number" name="minimas" min={0} defaultValue={n.fichas_minimas ?? ''} placeholder="mínimo" title="Mínimo de fichas (piso na divisão proporcional)" style={{ maxWidth: 100 }} />
                       <button className="btn sec mini" type="submit">Salvar</button>
                     </form>
                   ) : (n.fichas_fixas ?? 'proporcional')}
@@ -254,6 +255,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
               </select>
             </Campo>
             <Campo label="Fichas fixas" dica="vazio = divisão proporcional; cortesia exige um número"><input type="number" name="fixas" min={0} /></Campo>
+            <Campo label="Fichas mínimas" dica="piso: recebe pelo menos isso e mais se a proporção der mais"><input type="number" name="minimas" min={0} /></Campo>
             <label className="campo"><span>Separa dentro/fora da Arquidiocese</span><input type="checkbox" name="separa_origem" /></label>
             <div><button className="btn" type="submit">Adicionar núcleo</button></div>
           </form>

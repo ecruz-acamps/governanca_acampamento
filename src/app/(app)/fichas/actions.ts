@@ -68,11 +68,12 @@ export async function criarNucleo(formData: FormData) {
   const d = nz(formData.get('d'));
   const cortesia = formData.get('tipo') === 'cortesia';
   const fixas = inteiroOuNulo(formData.get('fixas'));
+  const minimas = inteiroOuNulo(formData.get('minimas'));
   const separa = flag(formData.get('separa_origem'));
   if (!nome) voltar(aqui(d), '', 'Informe o nome do núcleo.');
   if (cortesia && fixas === null) voltar(aqui(d), '', 'Cortesia precisa de um número fixo de fichas.');
   const erro = await tentar(() => run(u.id, async (tx) => {
-    await tx`insert into gov.nucleo (nome, tipo, fichas_fixas, separa_origem) values (${nome}, ${cortesia ? 'cortesia' : 'nucleo'}, ${fixas}, ${separa})`;
+    await tx`insert into gov.nucleo (nome, tipo, fichas_fixas, fichas_minimas, separa_origem) values (${nome}, ${cortesia ? 'cortesia' : 'nucleo'}, ${fixas}, ${minimas}, ${separa})`;
   }));
   voltar(aqui(d), 'Núcleo cadastrado.', erro);
 }
@@ -102,15 +103,16 @@ export async function excluirTodosNucleos(formData: FormData) {
   voltar(aqui(d), 'Todos os núcleos foram excluídos. Cadastre os que forem necessários.', erro);
 }
 
-/** Fichas fixas: vazio = entra na divisão proporcional. */
+/** Fichas fixas (vazio = entra na divisão proporcional) e fichas mínimas (piso na divisão proporcional). */
 export async function salvarNucleo(formData: FormData) {
   const u = await requirePerm('fichas:escrever');
   const id = nz(formData.get('id'));
   const d = nz(formData.get('d'));
   if (!isUuid(id)) redirect(aqui(d));
   const fixas = inteiroOuNulo(formData.get('fixas'));
+  const minimas = inteiroOuNulo(formData.get('minimas'));
   const erro = await tentar(() => run(u.id, async (tx) => {
-    await tx`update gov.nucleo set fichas_fixas = ${fixas} where id = ${id}`;
+    await tx`update gov.nucleo set fichas_fixas = ${fixas}, fichas_minimas = ${minimas} where id = ${id}`;
   }));
   voltar(aqui(d), 'Núcleo atualizado.', erro);
 }

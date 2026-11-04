@@ -29,8 +29,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
              ficha_pix, ficha_contato, ficha_inicio
         from gov.distribuicao_fichas where id = ${params.id}`;
     if (!d) return null;
-    const nucleos = await tx<{ id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; pre: number; fora: number; separa_origem: boolean }[]>`
-      select n.id, n.nome, n.tipo, n.fichas_fixas, n.separa_origem, coalesce(p.pre_fichas, 0) as pre, coalesce(p.pre_fora, 0) as fora
+    const nucleos = await tx<{ id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; fichas_minimas: number | null; pre: number; fora: number; separa_origem: boolean }[]>`
+      select n.id, n.nome, n.tipo, n.fichas_fixas, n.fichas_minimas, n.separa_origem, coalesce(p.pre_fichas, 0) as pre, coalesce(p.pre_fora, 0) as fora
         from gov.nucleo n left join gov.distribuicao_pre p on p.nucleo_id = n.id and p.distribuicao_id = ${params.id}
        where n.ativo`;
     const peso = await lerPesoFora(tx);
@@ -52,7 +52,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   if (erro) return new Response('Preencha os dados das fichas (nº da missão, datas, valor, PIX e contato) antes de gerar.', { status: 400 });
 
   const entradas: NucleoEntrada[] = nucleos.map((x) => ({
-    id: x.id, nome: x.nome, tipo: x.tipo, fichasFixas: x.fichas_fixas, preFichas: preEfetivas(x.pre, x.fora, x.separa_origem, peso),
+    id: x.id, nome: x.nome, tipo: x.tipo, fichasFixas: x.fichas_fixas, fichasMinimas: x.fichas_minimas, preFichas: preEfetivas(x.pre, x.fora, x.separa_origem, peso),
   }));
   const calc = distribuirFichas(d.total_fichas, entradas);
   const faixas = faixasFichas(calc.linhas, d.reserva_fichas, d.ficha_inicio);
