@@ -38,12 +38,9 @@ export async function salvarDistribuicao(formData: FormData) {
   const total = inteiroOuNulo(formData.get('total'));
   if (total === null) voltar(aqui(id), '', 'Informe o total de fichas.');
   const reserva = inteiroOuNulo(formData.get('reserva')) ?? 0;
-  const txtPeso = nz(formData.get('peso_fora'));
-  const peso = txtPeso ? lerValor(txtPeso) : 0.5;
-  if (peso === null || peso < 0 || peso > 1) voltar(aqui(id), '', 'O peso das pré-fichas de fora deve estar entre 0 e 1 (ex.: 0,5).');
   const nucleos = formData.getAll('nucleo').map(String).filter(isUuid);
   const erro = await tentar(() => run(u.id, async (tx) => {
-    await tx`update gov.distribuicao_fichas set total_fichas = ${total}, reserva_fichas = ${reserva}, peso_fora = ${peso} where id = ${id}`;
+    await tx`update gov.distribuicao_fichas set total_fichas = ${total}, reserva_fichas = ${reserva} where id = ${id}`;
     for (const n of nucleos) {
       const pre = inteiroOuNulo(formData.get(`pre_${n}`)) ?? 0;
       const fora = inteiroOuNulo(formData.get(`fora_${n}`)) ?? 0;
