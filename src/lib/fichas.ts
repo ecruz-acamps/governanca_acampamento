@@ -96,3 +96,12 @@ export function partesDaFaixa(f: Faixa): { parte: number; de: number; ate: numbe
   for (let de = f.de, i = 0; de <= f.ate; de += FICHAS_POR_ZIP, i++) partes.push({ parte: i, de, ate: Math.min(f.ate, de + FICHAS_POR_ZIP - 1) });
   return partes;
 }
+
+/**
+ * Pré-fichas que entram na divisão: as de dentro valem 1; as de fora da Arquidiocese valem `peso` (0 a 1).
+ * Só vale para núcleos que separam dentro/fora; nos demais, só as pré-fichas normais contam.
+ */
+export function preEfetivas(pre: number, fora: number, separaOrigem: boolean, peso: number): number {
+  const p = Math.min(1, Math.max(0, peso));
+  return Math.round((pre + (separaOrigem ? fora * p : 0)) * 10000) / 10000;
+}

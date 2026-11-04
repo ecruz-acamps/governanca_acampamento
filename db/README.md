@@ -23,5 +23,6 @@ numérica e **antes** de publicar o código que depende delas. Nunca coloque a s
 | 016 | Integração de pré-fichas: código externo do núcleo e histórico de sincronizações da API |
 | 017 | Patrimônio por área: cada coordenador só enxerga e altera os bens da sua área (trava também no banco) |
 | 018 | Dados das fichas em PDF (nº da missão, datas, valor, PIX, contato, nº inicial) na distribuição |
+| 019 | Peso das pré-fichas de fora da Arquidiocese (menor que o das de dentro) na divisão das fichas |
 
 Ao recriar do zero use 001, depois 002 e 004, e troque `fn_auditar` para remover `senha_hash` do JSON auditado.

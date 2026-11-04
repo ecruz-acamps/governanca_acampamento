@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Campo, Chip, Flash, PageHead, type SP } from '@/components/ui';
 import { run } from '@/lib/db';
-import { distribuirFichas, faixasFichas, partesDaFaixa, type NucleoEntrada } from '@/lib/fichas';
+import { distribuirFichas, faixasFichas, partesDaFaixa, preEfetivas, type NucleoEntrada } from '@/lib/fichas';
 import { isUuid } from '@/lib/form';
 import { can } from '@/lib/perms';
 import { requirePerm } from '@/lib/session';
@@ -9,7 +9,7 @@ import { alternarNucleo, criarDistribuicao, criarNucleo, excluirDistribuicao, ex
 
 type Dist = { id: string; titulo: string; ano: number; total_fichas: number; reserva_fichas: number; missao: string | null;
   m_inicio: string | null; m_fim: string | null; ficha_missao_numero: string | null; ficha_saida: string | null; ficha_encerramento: string | null;
-  ficha_valor: string | null; ficha_pix: string | null; ficha_contato: string | null; ficha_inicio: number;
+  ficha_valor: string | null; ficha_pix: string | null; ficha_contato: string | null; ficha_inicio: number; peso_fora: string;
 };
 type Nuc = { id: string; nome: string; tipo: 'nucleo' | 'cortesia'; fichas_fixas: number | null; ativo: boolean; pre_fichas: number; pre_fora: number; separa_origem: boolean };
 
@@ -20,7 +20,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
   const { dists, sel, nucleos, missoes } = await run(u.id, async (tx) => {
     const dists = await tx<Dist[]>`select d.id, d.titulo, d.ano, d.total_fichas, d.reserva_fichas, m.nome as missao,
               m.data_inicio::text as m_inicio, m.data_fim::text as m_fim, d.ficha_missao_numero, d.ficha_saida::text, d.ficha_encerramento::text,
-              d.ficha_valor::text, d.ficha_pix, d.ficha_contato, d.ficha_inicio
+              d.ficha_valor::text, d.ficha_pix, d.ficha_contato, d.ficha_inicio, d.peso_fora::text
         from gov.distribuicao_fichas d left join gov.missao m on m.id = d.missao_id
        order by d.ano desc, d.criado_em desc`;
     const sel = dists.find((d) => d.id === searchParams.d) ?? dists[0] ?? null;
@@ -37,8 +37,10 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
   });
 
   const ativos = nucleos.filter((n) => n.ativo);
+  const peso = sel ? Number(sel.peso_fora) : 0.5;
+  const fmtNum = (x: number) => String(Math.round(x * 100) / 100).replace('.', ',');
   const entradas: NucleoEntrada[] = ativos.map((n) => ({
-    id: n.id, nome: n.nome, tipo: n.tipo, fichasFixas: n.fichas_fixas, preFichas: n.pre_fichas + (n.separa_origem ? n.pre_fora : 0),
+    id: n.id, nome: n.nome, tipo: n.tipo, fichasFixas: n.fichas_fixas, preFichas: preEfetivas(n.pre_fichas, n.pre_fora, n.separa_origem, peso),
   }));
   const calc = sel ? distribuirFichas(sel.total_fichas, entradas) : null;
   const porId = new Map(calc?.linhas.map((l) => [l.id, l]) ?? []);
@@ -71,7 +73,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
             <div className="kpi"><b>{sel.total_fichas}</b><span>Fichas para os núcleos</span></div>
             <div className="kpi"><b>{calc.fixos}</b><span>Fixas e cortesia</span></div>
             <div className="kpi"><b>{Math.max(calc.restante, 0)}</b><span>A dividir entre os núcleos</span></div>
-            <div className="kpi"><b>{calc.somaPre}</b><span>Pré-fichas (núcleos proporcionais)</span></div>
+            <div className="kpi"><b>{fmtNum(calc.somaPre)}</b><span>Pré-fichas com peso (núcleos proporcionais)</span></div>
             <div className="kpi"><b>{sel.reserva_fichas}</b><span>Reserva: emergência e padres</span></div>
             <div className="kpi"><b>{sel.total_fichas + sel.reserva_fichas}</b><span>Total geral do acampamento</span></div>
           </div>
@@ -83,6 +85,9 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
               </Campo>
               <Campo label="Reserva (emergência e padres)" dica="fora da divisão">
                 <input type="number" name="reserva" min={0} defaultValue={sel.reserva_fichas} required />
+              </Campo>
+              <Campo label="Peso das pré-fichas de fora da Arquidiocese" dica="de 0 a 1; com 0,5 cada pré-ficha de fora vale metade de uma de dentro">
+                <input type="text" name="peso_fora" inputMode="decimal" defaultValue={fmtNum(peso)} required />
               </Campo>
             </div>
             <table style={{ marginTop: 12 }}>
@@ -103,7 +108,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
                           <div className="acoes">
                             <label className="muted">dentro <input type="number" name={`pre_${n.id}`} min={0} defaultValue={n.pre_fichas} style={{ maxWidth: 90 }} /></label>
                             <label className="muted">fora <input type="number" name={`fora_${n.id}`} min={0} defaultValue={n.pre_fora} style={{ maxWidth: 90 }} /></label>
-                            {fixo && <span className="muted">(fixo: não entra no cálculo)</span>}
+                            {fixo ? <span className="muted">(fixo: não entra no cálculo)</span> : <span className="muted">= {fmtNum(preEfetivas(n.pre_fichas, n.pre_fora, true, peso))} com peso</span>}
                           </div>
                         ) : fixo
                           ? <span className="muted">não entra no cálculo</span>
@@ -123,7 +128,7 @@ export default async function FichasPage({ searchParams }: { searchParams: SP & 
           </fieldset>
           <p className="muted" style={{ marginTop: 10 }}>
             Regra: as fichas fixas e a cortesia saem primeiro; o restante é dividido entre os demais núcleos na proporção das
-            pré-fichas, arredondando pelo maior resto para a soma fechar no total. Ao aumentar o total, as fichas a mais vão só
+            pré-fichas (as de fora da Arquidiocese valem o peso definido acima, as de dentro valem 1), arredondando pelo maior resto para a soma fechar no total. Ao aumentar o total, as fichas a mais vão só
             para os núcleos proporcionais; Anitápolis e a cortesia não mudam.
           </p>
         </form>
